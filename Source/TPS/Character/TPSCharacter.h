@@ -7,6 +7,13 @@
 #include "FuncLibrary/Types.h"
 #include "TPSCharacter.generated.h"
 
+//USTRUCT(BlueprintType)
+//struct FCharacterSpeedInfo
+//{
+//	GENERATED_BODY()
+//
+//
+//};
 UCLASS(Blueprintable)
 class ATPSCharacter : public ACharacter
 {
@@ -44,7 +51,14 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
 		EMovementState MovementState = EMovementState::Run_State;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
-		FCharacterSpeed MovementInfo;
+		FCharacterSpeed MovementSpeedInfo;	
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
+		bool SprintRunEnabled = false;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
+		bool WalkEnabled = false;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
+		bool AimEnabled = false;
 
 	UFUNCTION()
 		void InputAxisY(float Value);
@@ -60,6 +74,6 @@ public:
 	UFUNCTION(BlueprintCallable)
 		void CharacterUpdate();
 	UFUNCTION(BlueprintCallable)
-		void ChangeMovementState(EMovementState NewMovementState);
+		void ChangeMovementState();
 };
 
