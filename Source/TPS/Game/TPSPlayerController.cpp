@@ -7,6 +7,9 @@
 #include "Character/TPSCharacter.h"
 #include "Engine/World.h"
 
+#include "Engine/LocalPlayer.h"
+#include "GameFramework/HUD.h"
+
 ATPSPlayerController::ATPSPlayerController()
 {
 	bShowMouseCursor = true;
