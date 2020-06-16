@@ -3,8 +3,24 @@
 
 #include "TPSGameInstance.h"
 
-FWeaponInfo UTPSGameInstance::GetWeaponInfoByName(FName NameWeapon)
+bool UTPSGameInstance::GetWeaponInfoByName(FName NameWeapon, FWeaponInfo& OutInfo)
 {
-	FWeaponInfo WeaponInfo;
-	return WeaponInfo;
+	bool bIsFind = false;
+	FWeaponInfo* WeaponInfoRow;
+
+	if (WeaponInfoTable)
+	{
+		WeaponInfoRow = WeaponInfoTable->FindRow<FWeaponInfo>(NameWeapon, "", false);
+		if (WeaponInfoRow)
+		{
+			bIsFind = true;
+			OutInfo = *WeaponInfoRow;
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("UTPSGameInstance::GetWeaponInfoByName - WeaponTable -NULL"));
+	}
+		
+	return bIsFind;
 }

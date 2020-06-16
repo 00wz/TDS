@@ -6,6 +6,7 @@
 #include "GameFramework/Character.h"
 #include "FuncLibrary/Types.h"
 #include "Weapons/WeaponDefault.h"
+//#include "Components/WidgetComponent.h"
 
 #include "TPSCharacter.generated.h"
 
@@ -58,6 +59,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Cursor")
 		FVector CursorSize = FVector(20.0f, 40.0f, 40.0f);
 
+
 	//Movement
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
 		EMovementState MovementState = EMovementState::Run_State;
@@ -76,7 +78,7 @@ public:
 
 	//for demo 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Demo")
-	TSubclassOf<AWeaponDefault> InitWeaponClass = nullptr;
+	FName InitWeaponName;
 
 	UDecalComponent* CurrentCursor = nullptr;
 
@@ -92,6 +94,7 @@ public:
 
 	float AxisX = 0.0f;
 	float AxisY = 0.0f;
+
 	// Tick Func
 	UFUNCTION()
 	void MovementTick(float DeltaTime);
@@ -107,7 +110,17 @@ public:
 	UFUNCTION(BlueprintCallable)
 		AWeaponDefault* GetCurrentWeapon();
 	UFUNCTION(BlueprintCallable)
-		void InitWeapon();
+		void InitWeapon(FName IdWeaponName);
+	UFUNCTION(BlueprintCallable)
+	void TryReloadWeapon();
+	UFUNCTION()
+		void WeaponReloadStart(UAnimMontage* Anim);
+	UFUNCTION()
+		void WeaponReloadEnd();
+	UFUNCTION(BlueprintNativeEvent)
+		void WeaponReloadStart_BP(UAnimMontage* Anim);
+	UFUNCTION(BlueprintNativeEvent)
+		void WeaponReloadEnd_BP();
 
 	UFUNCTION(BlueprintCallable)
 	UDecalComponent* GetCursorToWorld();
