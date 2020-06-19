@@ -3,6 +3,7 @@
 #include "DrawDebugHelpers.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Kismet/GameplayStatics.h"
+#include "Engine/StaticMeshActor.h"
 
 // Sets default values
 AWeaponDefault::AWeaponDefault()
@@ -43,6 +44,7 @@ void AWeaponDefault::Tick(float DeltaTime)
 	FireTick(DeltaTime);
 	ReloadTick(DeltaTime);
 	DispersionTick(DeltaTime);
+	ClipDropTick(DeltaTime);
 }
 
 void AWeaponDefault::FireTick(float DeltaTime)
@@ -112,6 +114,17 @@ void AWeaponDefault::DispersionTick(float DeltaTime)
 		UE_LOG(LogTemp, Warning, TEXT("Dispersion: MAX = %f. MIN = %f. Current = %f"), CurrentDispersionMax, CurrentDispersionMin, CurrentDispersion);
 }
 
+void AWeaponDefault::ClipDropTick(float DeltaTime)
+{
+	if (DropClipFlag)
+	{
+		if (DropClipTimer < 0.0f)
+			DropClip();
+		else
+			DropClipTimer -= DeltaTime;
+	}	
+}
+
 void AWeaponDefault::WeaponInit()
 {
 	if (SkeletalMeshWeapon && !SkeletalMeshWeapon->SkeletalMesh)
@@ -148,6 +161,54 @@ FProjectileInfo AWeaponDefault::GetProjectile()
 
 void AWeaponDefault::Fire()
 {	
+	UAnimMontage* AnimToPlay = nullptr;
+	if (WeaponAiming)
+		AnimToPlay = WeaponSetting.AnimWeaponInfo.AnimCharFireAim;
+	else
+		AnimToPlay = WeaponSetting.AnimWeaponInfo.AnimCharFire;
+
+	if (WeaponSetting.AnimWeaponInfo.AnimWeaponFire
+		&& SkeletalMeshWeapon
+		&& SkeletalMeshWeapon->GetAnimInstance())//Bad Code? maybe best way init local variable or in func
+	{
+		SkeletalMeshWeapon->GetAnimInstance()->Montage_Play(WeaponSetting.AnimWeaponInfo.AnimWeaponFire);
+	}
+
+	if (WeaponSetting.ClipDropMesh)
+	{
+		FTransform Transform;
+		Transform.SetLocation(GetActorLocation() + WeaponSetting.ClipDropOffset.GetLocation());
+		Transform.SetScale3D(WeaponSetting.ClipDropOffset.GetScale3D());
+
+		Transform.SetRotation((GetActorRotation() + WeaponSetting.ClipDropOffset.Rotator()).Quaternion());
+
+		AStaticMeshActor* NewActor = GetWorld()->SpawnActorDeferred<AStaticMeshActor>(AStaticMeshActor::StaticClass(), Transform);
+		if (NewActor)
+		{
+			//set parameter for new actor
+			NewActor->SetActorTickEnabled(false);
+			NewActor->InitialLifeSpan = WeaponSetting.ClipDropLifeTime;
+			NewActor->GetStaticMeshComponent()->Mobility = EComponentMobility::Movable;
+			NewActor->GetStaticMeshComponent()->SetStaticMesh(WeaponSetting.ClipDropMesh);
+			NewActor->GetStaticMeshComponent()->SetCollisionProfileName(TEXT("BlockAll"));
+			NewActor->SetActorEnableCollision(true);
+			NewActor->GetStaticMeshComponent()->SetSimulatePhysics(true);
+
+			if (NewActor->GetStaticMeshComponent())
+			{
+				NewActor->GetStaticMeshComponent()->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECollisionResponse::ECR_Ignore);
+				NewActor->GetStaticMeshComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECollisionResponse::ECR_Ignore);
+			}
+
+		}
+		//after set parameter for new actor Finished spawn(Init constructor)
+		UGameplayStatics::FinishSpawningActor(NewActor, Transform);
+
+		NewActor->GetStaticMeshComponent()->AddImpulse(WeaponSetting.ClipDropImpulse);
+	}
+
+	OnWeaponFireStart.Broadcast(AnimToPlay);
+
 	FireTimer = WeaponSetting.RateOfFire;
 	WeaponInfo.Round = WeaponInfo.Round - 1;
 	ChangeDispersionByShot();
@@ -205,38 +266,39 @@ void AWeaponDefault::UpdateStateWeapon(EMovementState NewMovementState)
 {
 	//ToDo Dispersion
 	BlockFire = false;
-
+	
 	switch (NewMovementState)
 	{
 	case EMovementState::Aim_State:
-		
+		WeaponAiming = true;
 		CurrentDispersionMax = WeaponSetting.DispersionWeapon.Aim_StateDispersionAimMax;
 		CurrentDispersionMin = WeaponSetting.DispersionWeapon.Aim_StateDispersionAimMin;
 		CurrentDispersionRecoil = WeaponSetting.DispersionWeapon.Aim_StateDispersionAimRecoil;
 		CurrentDispersionReduction = WeaponSetting.DispersionWeapon.Aim_StateDispersionReduction;
 		break;
 	case EMovementState::AimWalk_State:
-		
+		WeaponAiming = true;
 		CurrentDispersionMax = WeaponSetting.DispersionWeapon.AimWalk_StateDispersionAimMax;
 		CurrentDispersionMin = WeaponSetting.DispersionWeapon.AimWalk_StateDispersionAimMin;
 		CurrentDispersionRecoil = WeaponSetting.DispersionWeapon.AimWalk_StateDispersionAimRecoil;
 		CurrentDispersionReduction = WeaponSetting.DispersionWeapon.Aim_StateDispersionReduction;
 		break;
 	case EMovementState::Walk_State:
-		
+		WeaponAiming = false;
 		CurrentDispersionMax = WeaponSetting.DispersionWeapon.Walk_StateDispersionAimMax;
 		CurrentDispersionMin = WeaponSetting.DispersionWeapon.Walk_StateDispersionAimMin;
 		CurrentDispersionRecoil = WeaponSetting.DispersionWeapon.Walk_StateDispersionAimRecoil;
 		CurrentDispersionReduction = WeaponSetting.DispersionWeapon.Aim_StateDispersionReduction;
 		break;
 	case EMovementState::Run_State:
-		
+		WeaponAiming = false;
 		CurrentDispersionMax = WeaponSetting.DispersionWeapon.Run_StateDispersionAimMax;
 		CurrentDispersionMin = WeaponSetting.DispersionWeapon.Run_StateDispersionAimMin;
 		CurrentDispersionRecoil = WeaponSetting.DispersionWeapon.Run_StateDispersionAimRecoil;
 		CurrentDispersionReduction = WeaponSetting.DispersionWeapon.Aim_StateDispersionReduction;
 		break;
 	case EMovementState::SprintRun_State:
+		WeaponAiming = false;
 		BlockFire = true;
 		SetWeaponStateFire(false);//set fire trigger to false
 		//Block Fire
@@ -316,9 +378,37 @@ void AWeaponDefault::InitReload()
 
 	ReloadTimer = WeaponSetting.ReloadTime;
 
-	//ToDo Anim reload
-	if(WeaponSetting.AnimCharReload)
-		OnWeaponReloadStart.Broadcast(WeaponSetting.AnimCharReload);
+	//so i want delegate if anim null
+	//if(WeaponSetting.AnimCharReload)
+
+	UAnimMontage* AnimToPlay = nullptr;
+	if (WeaponAiming)
+		AnimToPlay = WeaponSetting.AnimWeaponInfo.AnimCharReloadAim;
+	else
+		AnimToPlay = WeaponSetting.AnimWeaponInfo.AnimCharReload;
+
+	OnWeaponReloadStart.Broadcast(AnimToPlay);
+
+	UAnimMontage* AnimWeaponToPlay = nullptr;
+	if (WeaponAiming)
+		AnimWeaponToPlay = WeaponSetting.AnimWeaponInfo.AnimWeaponReloadAim;
+	else
+		AnimWeaponToPlay = WeaponSetting.AnimWeaponInfo.AnimWeaponReload;
+
+	if (WeaponSetting.AnimWeaponInfo.AnimWeaponReload
+		&& SkeletalMeshWeapon 
+		&& SkeletalMeshWeapon->GetAnimInstance())//Bad Code? maybe best way init local variable or in func
+	{
+		SkeletalMeshWeapon->GetAnimInstance()->Montage_Play(AnimWeaponToPlay);
+	}
+		
+
+	if (WeaponSetting.ClipDropMesh)
+	{
+		DropClipFlag = true;
+		DropClipTimer = WeaponSetting.ClipDropTime;
+	}
+	
 }
 
 void AWeaponDefault::FinishReload()
@@ -327,5 +417,56 @@ void AWeaponDefault::FinishReload()
 	WeaponInfo.Round = WeaponSetting.MaxRound;
 
 	OnWeaponReloadEnd.Broadcast();
+}
+
+void AWeaponDefault::DropClip()
+{
+	DropClipFlag = false;
+
+	//CreateDefaultSubobject() Not use
+
+	//Not actor for abstract object
+	//if (WeaponSetting.MagazineDrop)
+	//{
+	//	UStaticMeshComponent* newStaticMesh = NewObject<UStaticMeshComponent>(this, FName("DropClipStaticMesh"));
+	//	if (newStaticMesh)
+	//	{
+	//		newStaticMesh->SetStaticMesh(WeaponSetting.MagazineDrop);		
+	//		//...
+	//	}
+	//}
+	
+	if (WeaponSetting.ClipDropMesh)
+	{
+		FTransform Transform;
+		Transform.SetLocation(GetActorLocation() + WeaponSetting.ClipDropOffset.GetLocation());
+		Transform.SetScale3D(WeaponSetting.ClipDropOffset.GetScale3D());
+		
+		Transform.SetRotation((GetActorRotation() + WeaponSetting.ClipDropOffset.Rotator()).Quaternion());
+
+		AStaticMeshActor* NewActor = GetWorld()->SpawnActorDeferred<AStaticMeshActor>(AStaticMeshActor::StaticClass(), Transform);
+		if (NewActor)
+		{
+			//set parameter for new actor
+			NewActor->SetActorTickEnabled(false);
+			NewActor->InitialLifeSpan = WeaponSetting.ClipDropLifeTime;
+			NewActor->GetStaticMeshComponent()->Mobility = EComponentMobility::Movable;
+			NewActor->GetStaticMeshComponent()->SetStaticMesh(WeaponSetting.ClipDropMesh);
+			NewActor->GetStaticMeshComponent()->SetCollisionProfileName(TEXT("BlockAll"));
+			NewActor->SetActorEnableCollision(true);
+			NewActor->GetStaticMeshComponent()->SetSimulatePhysics(true);
+
+			if (NewActor->GetStaticMeshComponent())
+			{
+				NewActor->GetStaticMeshComponent()->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECollisionResponse::ECR_Ignore);
+				NewActor->GetStaticMeshComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECollisionResponse::ECR_Ignore);
+			}
+				
+		}
+		//after set parameter for new actor Finished spawn(Init constructor)
+		UGameplayStatics::FinishSpawningActor(NewActor, Transform);
+
+		NewActor->GetStaticMeshComponent()->AddImpulse(WeaponSetting.ClipDropImpulse);		
+	}
 }
 

@@ -291,8 +291,11 @@ void ATPSCharacter::InitWeapon(FName IdWeaponName)
 					myWeapon->ReloadTime = myWeaponInfo.ReloadTime;
 					myWeapon->UpdateStateWeapon(MovementState);
 
+					//Not Forget remove delegate on chabge/drop weapon
 					myWeapon->OnWeaponReloadStart.AddDynamic(this, &ATPSCharacter::WeaponReloadStart);
 					myWeapon->OnWeaponReloadEnd.AddDynamic(this, &ATPSCharacter::WeaponReloadEnd);
+
+					myWeapon->OnWeaponFireStart.AddDynamic(this, &ATPSCharacter::WeaponFireStart);
 				}
 			}
 		}
@@ -330,6 +333,16 @@ void ATPSCharacter::WeaponReloadStart_BP_Implementation(UAnimMontage* Anim)
 }
 
 void ATPSCharacter::WeaponReloadEnd_BP_Implementation()
+{
+	// in BP
+}
+
+void ATPSCharacter::WeaponFireStart(UAnimMontage* Anim)
+{
+	WeaponFireStart_BP(Anim);
+}
+
+void ATPSCharacter::WeaponFireStart_BP_Implementation(UAnimMontage* Anim)
 {
 	// in BP
 }

@@ -113,6 +113,27 @@ struct FWeaponDispersion
 };
 
 USTRUCT(BlueprintType)
+struct FAnimationWeaponInfo
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Anim Char")
+		UAnimMontage* AnimCharFire = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Anim Char")
+		UAnimMontage* AnimCharFireAim = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Anim Char")
+		UAnimMontage* AnimCharReload = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Anim Char")
+		UAnimMontage* AnimCharReloadAim = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Anim Weapon")
+		UAnimMontage* AnimWeaponReload = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Anim Weapon")
+		UAnimMontage* AnimWeaponReloadAim = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Anim Weapon")
+		UAnimMontage* AnimWeaponFire = nullptr;
+};
+USTRUCT(BlueprintType)
 struct FWeaponInfo : public FTableRowBase
 {
 	GENERATED_BODY()
@@ -150,12 +171,19 @@ struct FWeaponInfo : public FTableRowBase
 		UDecalComponent* DecalOnHit = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Anim ")
-		UAnimMontage* AnimCharFire = nullptr;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Anim ")
-		UAnimMontage* AnimCharReload = nullptr;
+		FAnimationWeaponInfo AnimWeaponInfo;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mesh ")
-		UStaticMesh* MagazineDrop = nullptr;
+		UStaticMesh* ClipDropMesh = nullptr;
+	//0.0f immediately drop
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mesh ")
+		float ClipDropTime = -1.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mesh ")
+		float ClipDropLifeTime = 5.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mesh ")
+		FTransform ClipDropOffset = FTransform();
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mesh ")
+		FVector ClipDropImpulse = FVector(0.0f);
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mesh ")
 		UStaticMesh* ShellBullets = nullptr;
 		
