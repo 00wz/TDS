@@ -53,6 +53,7 @@ public:
 	void ReloadTick(float DeltaTime);
 	void DispersionTick(float DeltaTime);
 	void ClipDropTick(float DeltaTime);
+	void ShellDropTick(float DeltaTime);
 
 	void WeaponInit();
 
@@ -102,6 +103,10 @@ public:
 	bool DropClipFlag = false;
 	float DropClipTimer = -1.0;
 
+	//shell flag
+	bool DropShellFlag = false;
+	float DropShellTimer = -1.0f;
+
 	FVector ShootEndLocation = FVector(0);
 
 	UFUNCTION(BlueprintCallable)
@@ -109,7 +114,7 @@ public:
 	void InitReload();
 	void FinishReload();
 
-	void DropClip();
+	void InitDropMesh(UStaticMesh* DropMesh, FTransform Offset, FVector DropImpulse, float LifeTimeMesh, float ImpulseRandomDispersion, float PowerImpulse);
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Debug")
 		bool ShowDebug = false;

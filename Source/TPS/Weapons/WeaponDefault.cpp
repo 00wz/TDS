@@ -45,6 +45,7 @@ void AWeaponDefault::Tick(float DeltaTime)
 	ReloadTick(DeltaTime);
 	DispersionTick(DeltaTime);
 	ClipDropTick(DeltaTime);
+	ShellDropTick(DeltaTime);
 }
 
 void AWeaponDefault::FireTick(float DeltaTime)
@@ -119,10 +120,27 @@ void AWeaponDefault::ClipDropTick(float DeltaTime)
 	if (DropClipFlag)
 	{
 		if (DropClipTimer < 0.0f)
-			DropClip();
+		{
+			DropClipFlag = false;
+			InitDropMesh(WeaponSetting.ClipDropMesh.DropMesh, WeaponSetting.ClipDropMesh.DropMeshOffset, WeaponSetting.ClipDropMesh.DropMeshImpulseDir, WeaponSetting.ClipDropMesh.DropMeshLifeTime, WeaponSetting.ClipDropMesh.ImpulseRandomDispersion,WeaponSetting.ClipDropMesh.PowerImpulse);
+		}			
 		else
 			DropClipTimer -= DeltaTime;
 	}	
+}
+
+void AWeaponDefault::ShellDropTick(float DeltaTime)
+{
+	if (DropShellFlag)
+	{
+		if (DropShellTimer < 0.0f)
+		{
+			DropShellFlag = false;
+			InitDropMesh(WeaponSetting.ShellBullets.DropMesh, WeaponSetting.ShellBullets.DropMeshOffset, WeaponSetting.ShellBullets.DropMeshImpulseDir, WeaponSetting.ShellBullets.DropMeshLifeTime, WeaponSetting.ShellBullets.ImpulseRandomDispersion,WeaponSetting.ShellBullets.PowerImpulse);
+		}			
+		else
+			DropShellTimer -= DeltaTime;
+	}
 }
 
 void AWeaponDefault::WeaponInit()
@@ -174,38 +192,12 @@ void AWeaponDefault::Fire()
 		SkeletalMeshWeapon->GetAnimInstance()->Montage_Play(WeaponSetting.AnimWeaponInfo.AnimWeaponFire);
 	}
 
-	if (WeaponSetting.ClipDropMesh)
+	if (WeaponSetting.ShellBullets.DropMesh)
 	{
-		FTransform Transform;
-		Transform.SetLocation(GetActorLocation() + WeaponSetting.ClipDropOffset.GetLocation());
-		Transform.SetScale3D(WeaponSetting.ClipDropOffset.GetScale3D());
-
-		Transform.SetRotation((GetActorRotation() + WeaponSetting.ClipDropOffset.Rotator()).Quaternion());
-
-		AStaticMeshActor* NewActor = GetWorld()->SpawnActorDeferred<AStaticMeshActor>(AStaticMeshActor::StaticClass(), Transform);
-		if (NewActor)
-		{
-			//set parameter for new actor
-			NewActor->SetActorTickEnabled(false);
-			NewActor->InitialLifeSpan = WeaponSetting.ClipDropLifeTime;
-			NewActor->GetStaticMeshComponent()->Mobility = EComponentMobility::Movable;
-			NewActor->GetStaticMeshComponent()->SetStaticMesh(WeaponSetting.ClipDropMesh);
-			NewActor->GetStaticMeshComponent()->SetCollisionProfileName(TEXT("BlockAll"));
-			NewActor->SetActorEnableCollision(true);
-			NewActor->GetStaticMeshComponent()->SetSimulatePhysics(true);
-
-			if (NewActor->GetStaticMeshComponent())
-			{
-				NewActor->GetStaticMeshComponent()->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECollisionResponse::ECR_Ignore);
-				NewActor->GetStaticMeshComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECollisionResponse::ECR_Ignore);
-			}
-
-		}
-		//after set parameter for new actor Finished spawn(Init constructor)
-		UGameplayStatics::FinishSpawningActor(NewActor, Transform);
-
-		NewActor->GetStaticMeshComponent()->AddImpulse(WeaponSetting.ClipDropImpulse);
+		DropShellFlag = true;
+		DropShellTimer = WeaponSetting.ShellBullets.DropMeshTime;
 	}
+
 
 	OnWeaponFireStart.Broadcast(AnimToPlay);
 
@@ -403,10 +395,10 @@ void AWeaponDefault::InitReload()
 	}
 		
 
-	if (WeaponSetting.ClipDropMesh)
+	if (WeaponSetting.ClipDropMesh.DropMesh)
 	{
 		DropClipFlag = true;
-		DropClipTimer = WeaponSetting.ClipDropTime;
+		DropClipTimer = WeaponSetting.ClipDropMesh.DropMeshTime;
 	}
 	
 }
@@ -419,9 +411,8 @@ void AWeaponDefault::FinishReload()
 	OnWeaponReloadEnd.Broadcast();
 }
 
-void AWeaponDefault::DropClip()
-{
-	DropClipFlag = false;
+void AWeaponDefault::InitDropMesh(UStaticMesh* DropMesh, FTransform Offset, FVector DropImpulse, float LifeTimeMesh, float ImpulseRandomDispersion, float PowerImpulse)
+{	
 
 	//CreateDefaultSubobject() Not use
 
@@ -436,22 +427,22 @@ void AWeaponDefault::DropClip()
 	//	}
 	//}
 	
-	if (WeaponSetting.ClipDropMesh)
+	if (DropMesh)
 	{
 		FTransform Transform;
-		Transform.SetLocation(GetActorLocation() + WeaponSetting.ClipDropOffset.GetLocation());
-		Transform.SetScale3D(WeaponSetting.ClipDropOffset.GetScale3D());
+		Transform.SetLocation(GetActorLocation() + Offset.GetLocation());
+		Transform.SetScale3D(Offset.GetScale3D());
 		
-		Transform.SetRotation((GetActorRotation() + WeaponSetting.ClipDropOffset.Rotator()).Quaternion());
+		Transform.SetRotation((GetActorRotation() + Offset.Rotator()).Quaternion());
 
 		AStaticMeshActor* NewActor = GetWorld()->SpawnActorDeferred<AStaticMeshActor>(AStaticMeshActor::StaticClass(), Transform);
 		if (NewActor)
 		{
 			//set parameter for new actor
 			NewActor->SetActorTickEnabled(false);
-			NewActor->InitialLifeSpan = WeaponSetting.ClipDropLifeTime;
+			NewActor->InitialLifeSpan = LifeTimeMesh;
 			NewActor->GetStaticMeshComponent()->Mobility = EComponentMobility::Movable;
-			NewActor->GetStaticMeshComponent()->SetStaticMesh(WeaponSetting.ClipDropMesh);
+			NewActor->GetStaticMeshComponent()->SetStaticMesh(DropMesh);
 			NewActor->GetStaticMeshComponent()->SetCollisionProfileName(TEXT("BlockAll"));
 			NewActor->SetActorEnableCollision(true);
 			NewActor->GetStaticMeshComponent()->SetSimulatePhysics(true);
@@ -466,7 +457,16 @@ void AWeaponDefault::DropClip()
 		//after set parameter for new actor Finished spawn(Init constructor)
 		UGameplayStatics::FinishSpawningActor(NewActor, Transform);
 
-		NewActor->GetStaticMeshComponent()->AddImpulse(WeaponSetting.ClipDropImpulse);		
+		if (NewActor && !DropImpulse.IsNearlyZero() && !FMath::IsNearlyZero(PowerImpulse))
+		{
+			//FVector myNormilize = FVector(this->GetActorForwardVector().X, this->GetActorRightVector().Y, this->GetActorUpVector().Z);
+			//FVector Dir = FVector(myNormilize.X + DropImpulse.X, myNormilize.Y + DropImpulse.Y, myNormilize.Z + DropImpulse.Z);
+			FVector Dir = SkeletalMeshWeapon->GetActorForwardVector() + DropImpulse;
+			if (!FMath::IsNearlyZero(ImpulseRandomDispersion))
+				Dir += UKismetMathLibrary::RandomUnitVectorInConeInDegrees(Dir, ImpulseRandomDispersion);
+			
+			NewActor->GetStaticMeshComponent()->AddImpulse(Dir* PowerImpulse);
+		}				
 	}
 }
 
