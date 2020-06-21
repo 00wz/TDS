@@ -114,7 +114,7 @@ public:
 	void InitReload();
 	void FinishReload();
 
-	void InitDropMesh(UStaticMesh* DropMesh, FTransform Offset, FVector DropImpulse, float LifeTimeMesh, float ImpulseRandomDispersion, float PowerImpulse);
+	void InitDropMesh(UStaticMesh* DropMesh, FTransform Offset, FVector DropImpulseDirection, float LifeTimeMesh, float ImpulseRandomDispersion, float PowerImpulse);
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Debug")
 		bool ShowDebug = false;
