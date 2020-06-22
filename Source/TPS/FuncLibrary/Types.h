@@ -154,6 +154,8 @@ struct FDropMeshInfo
 		float PowerImpulse = 0.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DropMesh ")
 		float ImpulseRandomDispersion = 0.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DropMesh ")
+		float CustomMass = 0.0f;
 };
 USTRUCT(BlueprintType)
 struct FWeaponInfo : public FTableRowBase

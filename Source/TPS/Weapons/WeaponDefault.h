@@ -65,7 +65,7 @@ public:
 	bool CheckWeaponCanFire();
 
 	FProjectileInfo GetProjectile();
-
+	UFUNCTION()
 	void Fire();
 
 	void UpdateStateWeapon(EMovementState NewMovementState);
@@ -111,10 +111,12 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	int32 GetWeaponRound();
+	UFUNCTION()
 	void InitReload();
 	void FinishReload();
 
-	void InitDropMesh(UStaticMesh* DropMesh, FTransform Offset, FVector DropImpulseDirection, float LifeTimeMesh, float ImpulseRandomDispersion, float PowerImpulse);
+	UFUNCTION()
+	void InitDropMesh (UStaticMesh* DropMesh, FTransform Offset, FVector DropImpulseDirection, float LifeTimeMesh, float ImpulseRandomDispersion, float PowerImpulse, float CustomMass);
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Debug")
 		bool ShowDebug = false;

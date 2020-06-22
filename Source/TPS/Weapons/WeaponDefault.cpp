@@ -122,7 +122,7 @@ void AWeaponDefault::ClipDropTick(float DeltaTime)
 		if (DropClipTimer < 0.0f)
 		{
 			DropClipFlag = false;
-			InitDropMesh(WeaponSetting.ClipDropMesh.DropMesh, WeaponSetting.ClipDropMesh.DropMeshOffset, WeaponSetting.ClipDropMesh.DropMeshImpulseDir, WeaponSetting.ClipDropMesh.DropMeshLifeTime, WeaponSetting.ClipDropMesh.ImpulseRandomDispersion,WeaponSetting.ClipDropMesh.PowerImpulse);
+			InitDropMesh(WeaponSetting.ClipDropMesh.DropMesh, WeaponSetting.ClipDropMesh.DropMeshOffset, WeaponSetting.ClipDropMesh.DropMeshImpulseDir, WeaponSetting.ClipDropMesh.DropMeshLifeTime, WeaponSetting.ClipDropMesh.ImpulseRandomDispersion,WeaponSetting.ClipDropMesh.PowerImpulse, WeaponSetting.ClipDropMesh.CustomMass);
 		}			
 		else
 			DropClipTimer -= DeltaTime;
@@ -136,7 +136,7 @@ void AWeaponDefault::ShellDropTick(float DeltaTime)
 		if (DropShellTimer < 0.0f)
 		{
 			DropShellFlag = false;
-			InitDropMesh(WeaponSetting.ShellBullets.DropMesh, WeaponSetting.ShellBullets.DropMeshOffset, WeaponSetting.ShellBullets.DropMeshImpulseDir, WeaponSetting.ShellBullets.DropMeshLifeTime, WeaponSetting.ShellBullets.ImpulseRandomDispersion,WeaponSetting.ShellBullets.PowerImpulse);
+			InitDropMesh(WeaponSetting.ShellBullets.DropMesh, WeaponSetting.ShellBullets.DropMeshOffset, WeaponSetting.ShellBullets.DropMeshImpulseDir, WeaponSetting.ShellBullets.DropMeshLifeTime, WeaponSetting.ShellBullets.ImpulseRandomDispersion,WeaponSetting.ShellBullets.PowerImpulse, WeaponSetting.ShellBullets.CustomMass);
 		}			
 		else
 			DropShellTimer -= DeltaTime;
@@ -442,9 +442,9 @@ void AWeaponDefault::FinishReload()
 	OnWeaponReloadEnd.Broadcast();
 }
 
-void AWeaponDefault::InitDropMesh(UStaticMesh* DropMesh, FTransform Offset, FVector DropImpulseDirection, float LifeTimeMesh, float ImpulseRandomDispersion, float PowerImpulse)
+void AWeaponDefault::InitDropMesh( UStaticMesh* DropMesh, FTransform Offset, FVector DropImpulseDirection, float LifeTimeMesh, float ImpulseRandomDispersion, float PowerImpulse, float CustomMass)
 {	
-
+	
 	//CreateDefaultSubobject() Not use
 
 	//Not actor for abstract object
@@ -466,16 +466,23 @@ void AWeaponDefault::InitDropMesh(UStaticMesh* DropMesh, FTransform Offset, FVec
 
 		Transform.SetLocation(GetActorLocation() + LocalDir);
 		Transform.SetScale3D(Offset.GetScale3D());
-		
-		Transform.SetRotation((GetActorRotation() + Offset.Rotator()).Quaternion());
 
-		AStaticMeshActor* NewActor = GetWorld()->SpawnActorDeferred<AStaticMeshActor>(AStaticMeshActor::StaticClass(), Transform);
-		if (NewActor)
+		Transform.SetRotation((GetActorRotation() + Offset.Rotator()).Quaternion());
+		AStaticMeshActor* NewActor = nullptr;
+
+
+		FActorSpawnParameters Param;
+		Param.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+		NewActor = GetWorld()->SpawnActor<AStaticMeshActor>(AStaticMeshActor::StaticClass(), Transform, Param);
+
+		if (NewActor && NewActor->GetStaticMeshComponent())
 		{
 			//set parameter for new actor
 			NewActor->SetActorTickEnabled(false);
 			NewActor->InitialLifeSpan = LifeTimeMesh;
+
 			NewActor->GetStaticMeshComponent()->Mobility = EComponentMobility::Movable;
+			NewActor->GetStaticMeshComponent()->SetSimulatePhysics(true);
 			NewActor->GetStaticMeshComponent()->SetStaticMesh(DropMesh);
 			NewActor->GetStaticMeshComponent()->SetCollisionProfileName(TEXT("BlockAll"));
 
@@ -486,26 +493,25 @@ void AWeaponDefault::InitDropMesh(UStaticMesh* DropMesh, FTransform Offset, FVec
 				NewActor->GetStaticMeshComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECollisionResponse::ECR_Ignore);
 			}
 
-			
 			NewActor->SetActorEnableCollision(true);
-	
+			if (CustomMass>0.0f)
+			{
+				NewActor->GetStaticMeshComponent()->SetMassOverrideInKg(NAME_None, CustomMass, true);
+			}	
+
+			if (!DropImpulseDirection.IsNearlyZero())
+			{
+				FVector FinalDir;
+				LocalDir = LocalDir + (DropImpulseDirection * 1000.0f);
+
+				if (!FMath::IsNearlyZero(ImpulseRandomDispersion))
+					FinalDir += UKismetMathLibrary::RandomUnitVectorInConeInDegrees(LocalDir, ImpulseRandomDispersion);
+				FinalDir.GetSafeNormal(0.0001f);
+
+				NewActor->GetStaticMeshComponent()->AddImpulse(FinalDir* PowerImpulse);
+			}
 		}
-		//after set parameter for new actor Finished spawn(Init constructor)
-		UGameplayStatics::FinishSpawningActor(NewActor, Transform);
 
-		NewActor->GetStaticMeshComponent()->SetSimulatePhysics(true);
-
-		if (NewActor && !DropImpulseDirection.IsNearlyZero() && !FMath::IsNearlyZero(PowerImpulse))
-		{
-			FVector FinalDir;
-			LocalDir = LocalDir + (DropImpulseDirection * 1000.0f);
-
-			if (!FMath::IsNearlyZero(ImpulseRandomDispersion))
-				FinalDir += UKismetMathLibrary::RandomUnitVectorInConeInDegrees(LocalDir, ImpulseRandomDispersion);
-			FinalDir.GetSafeNormal(0.0001f);
-
-			NewActor->GetStaticMeshComponent()->AddImpulse(FinalDir* PowerImpulse);
-		}				
+		
 	}
 }
-
