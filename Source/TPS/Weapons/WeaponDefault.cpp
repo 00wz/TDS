@@ -194,8 +194,15 @@ void AWeaponDefault::Fire()
 
 	if (WeaponSetting.ShellBullets.DropMesh)
 	{
-		DropShellFlag = true;
-		DropShellTimer = WeaponSetting.ShellBullets.DropMeshTime;
+		if (WeaponSetting.ShellBullets.DropMeshTime < 0.0f)
+		{
+			InitDropMesh(WeaponSetting.ShellBullets.DropMesh, WeaponSetting.ShellBullets.DropMeshOffset, WeaponSetting.ShellBullets.DropMeshImpulseDir, WeaponSetting.ShellBullets.DropMeshLifeTime, WeaponSetting.ShellBullets.ImpulseRandomDispersion, WeaponSetting.ShellBullets.PowerImpulse, WeaponSetting.ShellBullets.CustomMass);
+		}
+		else
+		{
+			DropShellFlag = true;
+			DropShellTimer = WeaponSetting.ShellBullets.DropMeshTime;
+		}	
 	}
 
 
@@ -249,9 +256,7 @@ void AWeaponDefault::Fire()
 				FHitResult Hit;
 				TArray<AActor*> Actors;
 				UKismetSystemLibrary::LineTraceSingle(GetWorld(), SpawnLocation, SpawnLocation + ShootLocation->GetForwardVector()*WeaponSetting.DistacneTrace,
-					ETraceTypeQuery::TraceTypeQuery4, false, Actors, EDrawDebugTrace::ForDuration, Hit, true, FLinearColor::Red,FLinearColor::Green, 5.0f);
-
-				//GetWorld()->LineTraceSingleByChannel(Hit, SpawnLocation, SpawnLocation + ShootLocation->GetForwardVector()*WeaponSetting.DistacneTrace, ECollisionChannel::ECC_GameTraceChannel2);
+					ETraceTypeQuery::TraceTypeQuery4, false, Actors, EDrawDebugTrace::ForDuration, Hit, true, FLinearColor::Red,FLinearColor::Green, 5.0f);			
 
 				if(ShowDebug)
 					DrawDebugLine(GetWorld(), SpawnLocation, SpawnLocation + ShootLocation->GetForwardVector()*WeaponSetting.DistacneTrace, FColor::Black, false, 5.f, (uint8)'\000', 0.5f);
@@ -472,11 +477,15 @@ void AWeaponDefault::InitDropMesh( UStaticMesh* DropMesh, FTransform Offset, FVe
 
 
 		FActorSpawnParameters Param;
-		Param.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+		Param.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+		Param.Owner = this;
 		NewActor = GetWorld()->SpawnActor<AStaticMeshActor>(AStaticMeshActor::StaticClass(), Transform, Param);
 
 		if (NewActor && NewActor->GetStaticMeshComponent())
 		{
+			NewActor->GetStaticMeshComponent()->SetCollisionProfileName(TEXT("IgnoreOnlyPawn"));
+			NewActor->GetStaticMeshComponent()->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
+			//NewActor->SetActorEnableCollision(true);
 			//set parameter for new actor
 			NewActor->SetActorTickEnabled(false);
 			NewActor->InitialLifeSpan = LifeTimeMesh;
@@ -484,16 +493,19 @@ void AWeaponDefault::InitDropMesh( UStaticMesh* DropMesh, FTransform Offset, FVe
 			NewActor->GetStaticMeshComponent()->Mobility = EComponentMobility::Movable;
 			NewActor->GetStaticMeshComponent()->SetSimulatePhysics(true);
 			NewActor->GetStaticMeshComponent()->SetStaticMesh(DropMesh);
-			NewActor->GetStaticMeshComponent()->SetCollisionProfileName(TEXT("BlockAll"));
+			//NewActor->GetStaticMeshComponent()->SetCollisionObjectType()
+			
+		
 
-			if (NewActor->GetStaticMeshComponent())
-			{
 				NewActor->GetStaticMeshComponent()->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECollisionResponse::ECR_Ignore);
 				NewActor->GetStaticMeshComponent()->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECollisionResponse::ECR_Ignore);
 				NewActor->GetStaticMeshComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECollisionResponse::ECR_Ignore);
-			}
+				NewActor->GetStaticMeshComponent()->SetCollisionResponseToChannel(ECC_WorldStatic, ECollisionResponse::ECR_Block);
+				NewActor->GetStaticMeshComponent()->SetCollisionResponseToChannel(ECC_WorldDynamic, ECollisionResponse::ECR_Block);
+				NewActor->GetStaticMeshComponent()->SetCollisionResponseToChannel(ECC_PhysicsBody, ECollisionResponse::ECR_Block);
+			
 
-			NewActor->SetActorEnableCollision(true);
+			
 			if (CustomMass>0.0f)
 			{
 				NewActor->GetStaticMeshComponent()->SetMassOverrideInKg(NAME_None, CustomMass, true);
