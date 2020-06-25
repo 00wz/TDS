@@ -229,16 +229,17 @@ void AWeaponDefault::Fire()
 		{
 			EndLocation = GetFireEndLocation(); 
 
-			FVector Dir = EndLocation - SpawnLocation;
-
-			Dir.Normalize();
-
-			FMatrix myMatrix(Dir, FVector(0, 1, 0), FVector(0, 0, 1), FVector::ZeroVector);
-			SpawnRotation = myMatrix.Rotator();
-
 			if (ProjectileInfo.Projectile)
 			{
 				//Projectile Init ballistic fire
+				FVector Dir = EndLocation - SpawnLocation;
+
+				Dir.Normalize();
+
+				FMatrix myMatrix(Dir, FVector(0, 1, 0), FVector(0, 0, 1), FVector::ZeroVector);
+				SpawnRotation = myMatrix.Rotator();
+
+			
 
 				FActorSpawnParameters SpawnParams;
 				SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
@@ -254,8 +255,9 @@ void AWeaponDefault::Fire()
 			else
 			{
 				FHitResult Hit;
-				TArray<AActor*> Actors;
-				UKismetSystemLibrary::LineTraceSingle(GetWorld(), SpawnLocation, SpawnLocation + ShootLocation->GetForwardVector()*WeaponSetting.DistacneTrace,
+				TArray<AActor*> Actors;				
+
+				UKismetSystemLibrary::LineTraceSingle(GetWorld(), SpawnLocation, EndLocation * WeaponSetting.DistacneTrace,
 					ETraceTypeQuery::TraceTypeQuery4, false, Actors, EDrawDebugTrace::ForDuration, Hit, true, FLinearColor::Red,FLinearColor::Green, 5.0f);			
 
 				if(ShowDebug)
@@ -485,7 +487,7 @@ void AWeaponDefault::InitDropMesh( UStaticMesh* DropMesh, FTransform Offset, FVe
 		{
 			NewActor->GetStaticMeshComponent()->SetCollisionProfileName(TEXT("IgnoreOnlyPawn"));
 			NewActor->GetStaticMeshComponent()->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
-			//NewActor->SetActorEnableCollision(true);
+			
 			//set parameter for new actor
 			NewActor->SetActorTickEnabled(false);
 			NewActor->InitialLifeSpan = LifeTimeMesh;
