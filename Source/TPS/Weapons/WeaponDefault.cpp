@@ -202,7 +202,7 @@ void AWeaponDefault::Fire()
 	OnWeaponFireStart.Broadcast(AnimToPlay);
 
 	FireTimer = WeaponSetting.RateOfFire;
-	WeaponInfo.Round = WeaponInfo.Round - 1;
+	AdditionalWeaponInfo.Round = AdditionalWeaponInfo.Round - 1;
 	ChangeDispersionByShot();
 
 	UGameplayStatics::SpawnSoundAtLocation(GetWorld(), WeaponSetting.SoundFireWeapon, ShootLocation->GetComponentLocation());
@@ -395,7 +395,7 @@ int8 AWeaponDefault::GetNumberProjectileByShot() const
 
 int32 AWeaponDefault::GetWeaponRound()
 {
-	return WeaponInfo.Round;
+	return AdditionalWeaponInfo.Round;
 }
 
 void AWeaponDefault::InitReload()
@@ -437,7 +437,7 @@ void AWeaponDefault::InitReload()
 void AWeaponDefault::FinishReload()
 {
 	WeaponReloading = false;
-	WeaponInfo.Round = WeaponSetting.MaxRound;
+	AdditionalWeaponInfo.Round = WeaponSetting.MaxRound;
 
 	OnWeaponReloadEnd.Broadcast();
 }

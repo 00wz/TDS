@@ -6,6 +6,7 @@
 #include "GameFramework/Character.h"
 #include "FuncLibrary/Types.h"
 #include "Weapons/WeaponDefault.h"
+#include "Character/TPSInventoryComponent.h"
 //#include "Components/WidgetComponent.h"
 
 #include "TPSCharacter.generated.h"
@@ -36,8 +37,9 @@ public:
 	FORCEINLINE class UCameraComponent* GetTopDownCameraComponent() const { return TopDownCameraComponent; }
 	/** Returns CameraBoom subobject **/
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
-	/** Returns CursorToWorld subobject **/
-	//FORCEINLINE class UDecalComponent* GetCursorToWorld() { return CursorToWorld; }
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
+		class UTPSInventoryComponent* InventoryComponent;
 
 private:
 	/** Top down camera */
@@ -47,10 +49,6 @@ private:
 	/** Camera boom positioning the camera above the character */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class USpringArmComponent* CameraBoom;
-
-	/** A decal that projects to the cursor location. */
-	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
-	//class UDecalComponent* CursorToWorld;
 
 public:
 	//Cursor
@@ -110,7 +108,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 		AWeaponDefault* GetCurrentWeapon();
 	UFUNCTION(BlueprintCallable)
-		void InitWeapon(FName IdWeaponName);
+		void InitWeapon(FName IdWeaponName, FAdditionalWeaponInfo WeaponAdditionalInfo);
+	UFUNCTION(BlueprintCallable)//VisualOnly
+		void RemoveCurrentWeapon();
 	UFUNCTION(BlueprintCallable)
 	void TryReloadWeapon();
 	UFUNCTION()
@@ -129,5 +129,13 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	UDecalComponent* GetCursorToWorld();
+
+	//Inventory Func
+	
+	void TrySwicthNextWeapon();
+	void TrySwitchPreviosWeapon();
+
+	UPROPERTY(BlueprintReadOnly,EditDefaultsOnly)
+	int32 CurrentIndexWeapon = 0;
 };
 
