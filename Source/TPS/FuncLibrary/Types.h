@@ -222,6 +222,10 @@ struct FWeaponInfo : public FTableRowBase
 		FDropMeshInfo ClipDropMesh;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mesh ")
 		FDropMeshInfo ShellBullets;
+
+	//inv
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory ")
+	float SwitchTimeToWeapon = 1.0f;
 		
 };
 

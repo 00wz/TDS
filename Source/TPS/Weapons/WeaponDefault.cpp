@@ -257,12 +257,18 @@ void AWeaponDefault::Fire()
 				FHitResult Hit;
 				TArray<AActor*> Actors;				
 
+				EDrawDebugTrace::Type DebugTrace;
+				if (ShowDebug)
+					{
+						DrawDebugLine(GetWorld(), SpawnLocation, SpawnLocation + ShootLocation->GetForwardVector()*WeaponSetting.DistacneTrace, FColor::Black, false, 5.f, (uint8)'\000', 0.5f);
+						DebugTrace = EDrawDebugTrace::ForDuration;
+					}
+				else
+					DebugTrace = EDrawDebugTrace::None;
+				
 				UKismetSystemLibrary::LineTraceSingle(GetWorld(), SpawnLocation, EndLocation * WeaponSetting.DistacneTrace,
-					ETraceTypeQuery::TraceTypeQuery4, false, Actors, EDrawDebugTrace::ForDuration, Hit, true, FLinearColor::Red,FLinearColor::Green, 5.0f);			
-
-				if(ShowDebug)
-					DrawDebugLine(GetWorld(), SpawnLocation, SpawnLocation + ShootLocation->GetForwardVector()*WeaponSetting.DistacneTrace, FColor::Black, false, 5.f, (uint8)'\000', 0.5f);
-
+					ETraceTypeQuery::TraceTypeQuery4, false, Actors, DebugTrace, Hit, true, FLinearColor::Red,FLinearColor::Green, 5.0f);
+		
 				if (Hit.GetActor() && Hit.PhysMaterial.IsValid())
 				{
 					EPhysicalSurface mySurfacetype = UGameplayStatics::GetSurfaceType(Hit);
@@ -446,7 +452,17 @@ void AWeaponDefault::FinishReload()
 	WeaponReloading = false;
 	AdditionalWeaponInfo.Round = WeaponSetting.MaxRound;
 
-	OnWeaponReloadEnd.Broadcast();
+	OnWeaponReloadEnd.Broadcast(true);
+}
+
+void AWeaponDefault::CancelReload()
+{
+	WeaponReloading = false;
+	if(SkeletalMeshWeapon && SkeletalMeshWeapon->GetAnimInstance())
+		SkeletalMeshWeapon->GetAnimInstance()->StopAllMontages(0.15f);
+
+	OnWeaponReloadEnd.Broadcast(false);
+	DropClipFlag = false;
 }
 
 void AWeaponDefault::InitDropMesh( UStaticMesh* DropMesh, FTransform Offset, FVector DropImpulseDirection, float LifeTimeMesh, float ImpulseRandomDispersion, float PowerImpulse, float CustomMass)

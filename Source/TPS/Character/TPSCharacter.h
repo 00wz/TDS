@@ -74,10 +74,6 @@ public:
 	//Weapon	
 	AWeaponDefault* CurrentWeapon = nullptr;
 
-	//for demo 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Demo")
-	FName InitWeaponName;
-
 	UDecalComponent* CurrentCursor = nullptr;
 
 	//Inputs
@@ -116,11 +112,11 @@ public:
 	UFUNCTION()
 		void WeaponReloadStart(UAnimMontage* Anim);
 	UFUNCTION()
-		void WeaponReloadEnd();
+		void WeaponReloadEnd(bool bIsSuccess);
 	UFUNCTION(BlueprintNativeEvent)
 		void WeaponReloadStart_BP(UAnimMontage* Anim);
 	UFUNCTION(BlueprintNativeEvent)
-		void WeaponReloadEnd_BP();
+		void WeaponReloadEnd_BP(bool bIsSuccess);
 
 	UFUNCTION()
 		void WeaponFireStart(UAnimMontage* Anim);

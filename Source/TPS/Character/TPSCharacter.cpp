@@ -335,9 +335,9 @@ void ATPSCharacter::RemoveCurrentWeapon()
 
 void ATPSCharacter::TryReloadWeapon()
 {
-	if (CurrentWeapon)
+	if (CurrentWeapon && !CurrentWeapon->WeaponReloading)//fix reload
 	{
-		if (CurrentWeapon->GetWeaponRound() < CurrentWeapon->WeaponSetting.MaxRound)//fix
+		if (CurrentWeapon->GetWeaponRound() < CurrentWeapon->WeaponSetting.MaxRound)
 			CurrentWeapon->InitReload();
 	}
 }
@@ -347,9 +347,9 @@ void ATPSCharacter::WeaponReloadStart(UAnimMontage* Anim)
 	WeaponReloadStart_BP(Anim);
 }
 
-void ATPSCharacter::WeaponReloadEnd()
+void ATPSCharacter::WeaponReloadEnd(bool bIsSuccess)
 {
-	WeaponReloadEnd_BP();
+	WeaponReloadEnd_BP(bIsSuccess);
 }
 
 void ATPSCharacter::WeaponReloadStart_BP_Implementation(UAnimMontage* Anim)
@@ -357,7 +357,7 @@ void ATPSCharacter::WeaponReloadStart_BP_Implementation(UAnimMontage* Anim)
 	// in BP
 }
 
-void ATPSCharacter::WeaponReloadEnd_BP_Implementation()
+void ATPSCharacter::WeaponReloadEnd_BP_Implementation(bool bIsSuccess)
 {
 	// in BP
 }
@@ -376,7 +376,7 @@ UDecalComponent* ATPSCharacter::GetCursorToWorld()
 {
 	return CurrentCursor;
 }
-
+//in one func
 void ATPSCharacter::TrySwicthNextWeapon()
 {
 	if (InventoryComponent->WeaponSlots.Num() > 1)
@@ -385,17 +385,22 @@ void ATPSCharacter::TrySwicthNextWeapon()
 		int8 OldIndex = CurrentIndexWeapon;
 		FAdditionalWeaponInfo OldInfo;
 		if (CurrentWeapon)
+		{
 			OldInfo = CurrentWeapon->AdditionalWeaponInfo;
-
+			if(CurrentWeapon->WeaponReloading)
+				CurrentWeapon->CancelReload();
+		}
+			
 		if (InventoryComponent)
 		{
-			//InventoryComponent->SetAdditionalInfoWeapon(OldIndex, GetCurrentWeapon()->AdditionalWeaponInfo);
+			//need Timer to Switch with Anim, this method stupid i must know switch success for second logic inventory
+			//now we not have not success switch/ if 1 weapon switch to self
 			if (InventoryComponent->SwitchWeaponToIndex(CurrentIndexWeapon + 1, OldIndex, OldInfo))
 				{ }
 		}
 	}	
 }
-
+//in one func
 void ATPSCharacter::TrySwitchPreviosWeapon()
 {
 	if (InventoryComponent->WeaponSlots.Num() > 1)
@@ -404,7 +409,11 @@ void ATPSCharacter::TrySwitchPreviosWeapon()
 		int8 OldIndex = CurrentIndexWeapon;
 		FAdditionalWeaponInfo OldInfo;
 		if (CurrentWeapon)
+		{
 			OldInfo = CurrentWeapon->AdditionalWeaponInfo;
+			if (CurrentWeapon->WeaponReloading)
+				CurrentWeapon->CancelReload();
+		}
 
 		if (InventoryComponent)
 		{
