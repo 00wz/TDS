@@ -293,7 +293,7 @@ void ATPSCharacter::InitWeapon(FName IdWeaponName, FAdditionalWeaponInfo WeaponA
 
 				FActorSpawnParameters SpawnParams;
 				SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-				SpawnParams.Owner = GetOwner();
+				SpawnParams.Owner = this;
 				SpawnParams.Instigator = GetInstigator();
 
 				AWeaponDefault* myWeapon = Cast<AWeaponDefault>(GetWorld()->SpawnActor(myWeaponInfo.WeaponClass, &SpawnLocation, &SpawnRotation, SpawnParams));
@@ -301,8 +301,8 @@ void ATPSCharacter::InitWeapon(FName IdWeaponName, FAdditionalWeaponInfo WeaponA
 				{
 					FAttachmentTransformRules Rule(EAttachmentRule::SnapToTarget, false);
 					myWeapon->AttachToComponent(GetMesh(), Rule, FName("WeaponSocketRightHand"));
-					CurrentWeapon = myWeapon;
-					
+					CurrentWeapon = myWeapon;					
+
 					myWeapon->WeaponSetting = myWeaponInfo;
 					myWeapon->AdditionalWeaponInfo.Round = myWeaponInfo.MaxRound;
 					//Remove !!! Debug
@@ -313,11 +313,18 @@ void ATPSCharacter::InitWeapon(FName IdWeaponName, FAdditionalWeaponInfo WeaponA
 					if(InventoryComponent)
 						CurrentIndexWeapon = InventoryComponent->GetWeaponIndexSlotByName(IdWeaponName);
 
-					//Not Forget remove delegate on chabge/drop weapon
+					//Not Forget remove delegate on change/drop weapon
 					myWeapon->OnWeaponReloadStart.AddDynamic(this, &ATPSCharacter::WeaponReloadStart);
 					myWeapon->OnWeaponReloadEnd.AddDynamic(this, &ATPSCharacter::WeaponReloadEnd);
 
 					myWeapon->OnWeaponFireStart.AddDynamic(this, &ATPSCharacter::WeaponFireStart);
+
+					// after switch try reload weapon if needed
+					if (CurrentWeapon->GetWeaponRound() <=0 && CurrentWeapon->CheckCanWeaponReload())
+						CurrentWeapon->InitReload();
+
+					if(InventoryComponent)
+						InventoryComponent->OnWeaponAmmoAviable.Broadcast(myWeapon->WeaponSetting.WeaponType);
 				}
 			}
 		}
@@ -337,7 +344,7 @@ void ATPSCharacter::TryReloadWeapon()
 {
 	if (CurrentWeapon && !CurrentWeapon->WeaponReloading)//fix reload
 	{
-		if (CurrentWeapon->GetWeaponRound() < CurrentWeapon->WeaponSetting.MaxRound)
+		if (CurrentWeapon->GetWeaponRound() < CurrentWeapon->WeaponSetting.MaxRound && CurrentWeapon->CheckCanWeaponReload())
 			CurrentWeapon->InitReload();
 	}
 }
@@ -347,8 +354,13 @@ void ATPSCharacter::WeaponReloadStart(UAnimMontage* Anim)
 	WeaponReloadStart_BP(Anim);
 }
 
-void ATPSCharacter::WeaponReloadEnd(bool bIsSuccess)
+void ATPSCharacter::WeaponReloadEnd(bool bIsSuccess, int32 AmmoTake)
 {
+	if (InventoryComponent && CurrentWeapon)
+	{
+		InventoryComponent->AmmoSlotChangeValue(CurrentWeapon->WeaponSetting.WeaponType, AmmoTake);
+		InventoryComponent->SetAdditionalInfoWeapon(CurrentIndexWeapon, CurrentWeapon->AdditionalWeaponInfo);
+	}
 	WeaponReloadEnd_BP(bIsSuccess);
 }
 
@@ -364,6 +376,8 @@ void ATPSCharacter::WeaponReloadEnd_BP_Implementation(bool bIsSuccess)
 
 void ATPSCharacter::WeaponFireStart(UAnimMontage* Anim)
 {
+	if(InventoryComponent && CurrentWeapon)
+		InventoryComponent->SetAdditionalInfoWeapon(CurrentIndexWeapon, CurrentWeapon->AdditionalWeaponInfo);
 	WeaponFireStart_BP(Anim);
 }
 
@@ -376,7 +390,9 @@ UDecalComponent* ATPSCharacter::GetCursorToWorld()
 {
 	return CurrentCursor;
 }
-//in one func
+//ToDO in one func TrySwitchPreviosWeapon && TrySwicthNextWeapon
+//need Timer to Switch with Anim, this method stupid i must know switch success for second logic inventory
+//now we not have not success switch/ if 1 weapon switch to self
 void ATPSCharacter::TrySwicthNextWeapon()
 {
 	if (InventoryComponent->WeaponSlots.Num() > 1)
@@ -392,15 +408,13 @@ void ATPSCharacter::TrySwicthNextWeapon()
 		}
 			
 		if (InventoryComponent)
-		{
-			//need Timer to Switch with Anim, this method stupid i must know switch success for second logic inventory
-			//now we not have not success switch/ if 1 weapon switch to self
-			if (InventoryComponent->SwitchWeaponToIndex(CurrentIndexWeapon + 1, OldIndex, OldInfo))
+		{			
+			if (InventoryComponent->SwitchWeaponToIndex(CurrentIndexWeapon + 1, OldIndex, OldInfo,true))
 				{ }
 		}
 	}	
 }
-//in one func
+
 void ATPSCharacter::TrySwitchPreviosWeapon()
 {
 	if (InventoryComponent->WeaponSlots.Num() > 1)
@@ -418,7 +432,7 @@ void ATPSCharacter::TrySwitchPreviosWeapon()
 		if (InventoryComponent)
 		{
 			//InventoryComponent->SetAdditionalInfoWeapon(OldIndex, GetCurrentWeapon()->AdditionalWeaponInfo);
-			if (InventoryComponent->SwitchWeaponToIndex(CurrentIndexWeapon - 1,OldIndex, OldInfo))
+			if (InventoryComponent->SwitchWeaponToIndex(CurrentIndexWeapon - 1,OldIndex, OldInfo, false))
 				{ }
 		}
 	}

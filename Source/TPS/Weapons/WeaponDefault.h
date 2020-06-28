@@ -12,7 +12,7 @@
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWeaponFireStart, UAnimMontage*, AnimFireChar);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWeaponReloadStart,UAnimMontage*, AnimReloadChar);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWeaponReloadEnd, bool, bIsSuccess);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnWeaponReloadEnd, bool, bIsSuccess, int32, AmmoSafe);
 
 UCLASS()
 class TPS_API AWeaponDefault : public AActor
@@ -56,8 +56,6 @@ public:
 	void ShellDropTick(float DeltaTime);
 
 	void WeaponInit();
-
-
 
 	UFUNCTION(BlueprintCallable)
 	void SetWeaponStateFire(bool bIsFire);
@@ -115,6 +113,9 @@ public:
 	void InitReload();
 	void FinishReload();
 	void CancelReload();
+
+	bool CheckCanWeaponReload();
+	int8 GetAviableAmmoForReload();
 
 	UFUNCTION()
 	void InitDropMesh (UStaticMesh* DropMesh, FTransform Offset, FVector DropImpulseDirection, float LifeTimeMesh, float ImpulseRandomDispersion, float PowerImpulse, float CustomMass);

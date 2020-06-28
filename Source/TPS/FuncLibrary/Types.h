@@ -227,6 +227,10 @@ struct FWeaponInfo : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory ")
 	float SwitchTimeToWeapon = 1.0f;
 		
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory ")
+	UTexture2D* WeaponIcon = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory ")
+	EWeaponType WeaponType = EWeaponType::RifleType;
 };
 
 USTRUCT(BlueprintType)
@@ -244,8 +248,6 @@ struct FWeaponSlot
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "WeaponSlot")
-		int32 IndexSlot = 0;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "WeaponSlot")
 		FName NameItem;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "WeaponSlot")
