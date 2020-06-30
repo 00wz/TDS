@@ -466,7 +466,7 @@ void AWeaponDefault::FinishReload()
 		AmmoNeedTakeFromInv = NeedToReload;
 	}
 		
-	OnWeaponReloadEnd.Broadcast(true, AmmoNeedTakeFromInv);
+	OnWeaponReloadEnd.Broadcast(true, -AmmoNeedTakeFromInv);
 }
 
 

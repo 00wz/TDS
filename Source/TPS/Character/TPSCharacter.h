@@ -104,7 +104,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 		AWeaponDefault* GetCurrentWeapon();
 	UFUNCTION(BlueprintCallable)
-		void InitWeapon(FName IdWeaponName, FAdditionalWeaponInfo WeaponAdditionalInfo);
+		void InitWeapon(FName IdWeaponName, FAdditionalWeaponInfo WeaponAdditionalInfo, int32 NewCurrentIndexWeapon);
 	UFUNCTION(BlueprintCallable)//VisualOnly
 		void RemoveCurrentWeapon();
 	UFUNCTION(BlueprintCallable)

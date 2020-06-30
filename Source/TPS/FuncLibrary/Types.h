@@ -267,6 +267,20 @@ struct FAmmoSlot
 		int32 MaxCout = 100;
 };
 
+USTRUCT(BlueprintType)
+struct FDropItem : public FTableRowBase
+{
+	GENERATED_BODY()
+
+		///Index Slot by Index Array
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DropWeapon")
+		UStaticMesh* WeaponStaticMesh = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DropWeapon")
+		USkeletalMesh* WeaponSkeletMesh = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DropWeapon")
+		FWeaponSlot WeaponInfo;
+};
+
 UCLASS()
 class TPS_API UTypes : public UBlueprintFunctionLibrary
 {

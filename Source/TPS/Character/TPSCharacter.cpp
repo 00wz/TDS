@@ -272,7 +272,7 @@ AWeaponDefault* ATPSCharacter::GetCurrentWeapon()
 	return CurrentWeapon;
 }
 
-void ATPSCharacter::InitWeapon(FName IdWeaponName, FAdditionalWeaponInfo WeaponAdditionalInfo)
+void ATPSCharacter::InitWeapon(FName IdWeaponName, FAdditionalWeaponInfo WeaponAdditionalInfo, int32 NewCurrentIndexWeapon)
 {
 	if (CurrentWeapon)
 	{
@@ -304,14 +304,15 @@ void ATPSCharacter::InitWeapon(FName IdWeaponName, FAdditionalWeaponInfo WeaponA
 					CurrentWeapon = myWeapon;					
 
 					myWeapon->WeaponSetting = myWeaponInfo;
-					myWeapon->AdditionalWeaponInfo.Round = myWeaponInfo.MaxRound;
-					//Remove !!! Debug
+
+					//myWeapon->AdditionalWeaponInfo.Round = myWeaponInfo.MaxRound;
+					
 					myWeapon->ReloadTime = myWeaponInfo.ReloadTime;
 					myWeapon->UpdateStateWeapon(MovementState);
 
 					myWeapon->AdditionalWeaponInfo = WeaponAdditionalInfo;
-					if(InventoryComponent)
-						CurrentIndexWeapon = InventoryComponent->GetWeaponIndexSlotByName(IdWeaponName);
+					//if(InventoryComponent)
+						CurrentIndexWeapon = NewCurrentIndexWeapon;//fix
 
 					//Not Forget remove delegate on change/drop weapon
 					myWeapon->OnWeaponReloadStart.AddDynamic(this, &ATPSCharacter::WeaponReloadStart);
