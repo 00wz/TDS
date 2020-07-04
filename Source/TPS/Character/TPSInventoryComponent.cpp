@@ -3,7 +3,7 @@
 
 #include "TPSInventoryComponent.h"
 #include "Game/TPSGameInstance.h"
-#pragma optimize ("", off)
+
 
 // Sets default values for this component's properties
 UTPSInventoryComponent::UTPSInventoryComponent()
@@ -590,7 +590,7 @@ bool UTPSInventoryComponent::GetDropItemInfoFromInventory(int32 IndexSlot, FDrop
 	UTPSGameInstance* myGI = Cast<UTPSGameInstance>(GetWorld()->GetGameInstance());
 	if (myGI)
 	{
-		result = myGI->GetDropItemInfoByName(DropItemName, DropItemInfo);
+		result = myGI->GetDropItemInfoByWeaponName(DropItemName, DropItemInfo);
 		if (WeaponSlots.IsValidIndex(IndexSlot))
 		{
 			DropItemInfo.WeaponInfo.AdditionalInfo = WeaponSlots[IndexSlot].AdditionalInfo;
@@ -600,4 +600,4 @@ bool UTPSInventoryComponent::GetDropItemInfoFromInventory(int32 IndexSlot, FDrop
 	return result;
 }
 
-#pragma optimize ("", on)
+
