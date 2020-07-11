@@ -7,6 +7,7 @@
 #include "FuncLibrary/Types.h"
 #include "Weapons/WeaponDefault.h"
 #include "Character/TPSInventoryComponent.h"
+#include "Character/TPSCharacterHealthComponent.h"
 //#include "Components/WidgetComponent.h"
 
 #include "TPSCharacter.generated.h"
@@ -28,6 +29,8 @@ protected:
 public:
 	ATPSCharacter();
 
+	FTimerHandle TimerHandle_RagDollTimer;
+
 	// Called every frame.
 	virtual void Tick(float DeltaSeconds) override;
 
@@ -38,9 +41,10 @@ public:
 	/** Returns CameraBoom subobject **/
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Inventory", meta = (AllowPrivateAccess = "true"))
 		class UTPSInventoryComponent* InventoryComponent;
-
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Health", meta = (AllowPrivateAccess = "true"))
+		class UTPSCharacterHealthComponent* CharHealthComponent;
 private:
 	/** Top down camera */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
@@ -70,6 +74,11 @@ public:
 		bool WalkEnabled = false;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
 		bool AimEnabled = false;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
+		bool bIsAlive = true;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
+		TArray<UAnimMontage*> DeadsAnim;
 
 	//Weapon	
 	AWeaponDefault* CurrentWeapon = nullptr;
@@ -133,5 +142,11 @@ public:
 
 	UPROPERTY(BlueprintReadOnly,EditDefaultsOnly)
 	int32 CurrentIndexWeapon = 0;
+
+	
+	UFUNCTION()
+	void CharDead();
+	void EnableRagdoll();
+	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
 };
 
