@@ -6,6 +6,7 @@
 #include "Engine/StaticMeshActor.h"
 #include "Character/TPSInventoryComponent.h"
 
+
 // Sets default values
 AWeaponDefault::AWeaponDefault()
 {
@@ -287,6 +288,16 @@ void AWeaponDefault::Fire()
 					{
 						UGameplayStatics::PlaySoundAtLocation(GetWorld(), WeaponSetting.ProjectileSetting.HitSound, Hit.ImpactPoint);
 					}
+					
+
+					UTypes::AddEffectBySurfaceType(Hit.GetActor(), ProjectileInfo.Effect, mySurfacetype);				
+					
+					//if (Hit.GetActor()->GetClass()->ImplementsInterface(UTPS_IGameActor::StaticClass()))
+					//{
+					//	//ITPS_IGameActor::Execute_AviableForEffects(Hit.GetActor());
+					//	//ITPS_IGameActor::Execute_AviableForEffectsBP(Hit.GetActor());
+					//}
+												
 					UGameplayStatics::ApplyPointDamage(Hit.GetActor(), WeaponSetting.ProjectileSetting.ProjectileDamage, Hit.TraceStart,Hit, GetInstigatorController(),this,NULL);
 					//UGameplayStatics::ApplyDamage(Hit.GetActor(), WeaponSetting.ProjectileSetting.ProjectileDamage, GetInstigatorController(), this, NULL);
 				}
