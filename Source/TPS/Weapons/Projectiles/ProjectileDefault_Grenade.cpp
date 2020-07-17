@@ -3,6 +3,7 @@
 
 #include "ProjectileDefault_Grenade.h"
 #include "Kismet/GameplayStatics.h"
+#include "Interface/TPS_IGameActor.h"
 #include "DrawDebugHelpers.h"
 
 int32 DebugExplodeShow = 0;
@@ -72,6 +73,7 @@ void AProjectileDefault_Grenade::Explose()
 		UGameplayStatics::PlaySoundAtLocation(GetWorld(), ProjectileSetting.ExplodeSound, GetActorLocation());
 	}
 	
+
 	TArray<AActor*> IgnoredActor;
 	UGameplayStatics::ApplyRadialDamageWithFalloff(GetWorld(),
 		ProjectileSetting.ExplodeMaxDamage,
@@ -80,7 +82,7 @@ void AProjectileDefault_Grenade::Explose()
 		ProjectileSetting.ProjectileMinRadiusDamage,
 		ProjectileSetting.ProjectileMaxRadiusDamage,
 		5,
-		NULL, IgnoredActor,nullptr,nullptr);
+		NULL, IgnoredActor,this,nullptr);
 
 	this->Destroy();
 }

@@ -4,8 +4,10 @@
 
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "Engine/DataTable.h"
-
+#include "StateEffects/TPS_StateEffect.h"
 #include "Types.generated.h"
+
+class UTPS_IGameActor;
 
 UENUM(BlueprintType)
 enum class EMovementState : uint8
@@ -78,8 +80,11 @@ struct FProjectileInfo
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FX")
 	TMap<TEnumAsByte<EPhysicalSurface>, UParticleSystem*> HitFXs;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effect")
+		TSubclassOf<UTPS_StateEffect> Effect = nullptr;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Explode")
-	UParticleSystem* ExplodeFX = nullptr;
+		UParticleSystem* ExplodeFX = nullptr;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Explode")
 		USoundBase* ExplodeSound = nullptr;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Explode")
@@ -90,7 +95,8 @@ struct FProjectileInfo
 		float ExplodeMaxDamage = 40.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Explode")
 		float ExplodeFalloffCoef = 1.0f;
-		//Timer add
+	
+
 };
 
 USTRUCT(BlueprintType)
@@ -289,5 +295,10 @@ UCLASS()
 class TPS_API UTypes : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()
+
+public:
+
+	UFUNCTION(BlueprintCallable)
+	static void AddEffectBySurfaceType(AActor* TakeEffectActor, TSubclassOf<UTPS_StateEffect> AddEffectClass, EPhysicalSurface SurfaceType);
 };
 
