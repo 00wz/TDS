@@ -9,7 +9,7 @@
 #include "TPS_StateEffect.generated.h"
 
 /**
- * 
+ All implementation effects in one file, Fire Effect, blooding and...
  */
 UCLASS(Blueprintable, BlueprintType)
 class TPS_API UTPS_StateEffect : public UObject

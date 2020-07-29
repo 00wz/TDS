@@ -70,6 +70,8 @@ bool UTPS_StateEffect_ExecuteTimer::InitObject(AActor* Actor)
 	
 	if (ParticleEffect)
 	{
+	//ToDo for object with interface create func return offset, Name Bones, 
+	//ToDo Random init Effect with available array (For)
 		FName NameBoneToAttached;
 		FVector Loc = FVector(0);
 		
@@ -90,7 +92,6 @@ void UTPS_StateEffect_ExecuteTimer::Execute()
 {
 	if (myActor)
 	{	
-		//UGameplayStatics::ApplyDamage(myActor,Power,nullptr,nullptr,nullptr);	
 		UTPSHealthComponent* myHealthComp = Cast<UTPSHealthComponent>(myActor->GetComponentByClass(UTPSHealthComponent::StaticClass()));
 		if (myHealthComp)
 		{
