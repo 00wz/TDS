@@ -25,6 +25,7 @@ public:
 	// Sets default values for this component's properties
 	UTPSInventoryComponent();
 	
+	UPROPERTY(BlueprintAssignable, Category = "Inventory")
 	FOnSwitchWeapon OnSwitchWeapon;
 	UPROPERTY(BlueprintAssignable, Category = "Inventory")
 	//Event on change ammo in slots by weaponType

@@ -451,7 +451,6 @@ void AWeaponDefault::InitReload()
 	
 }
 
-
 void AWeaponDefault::FinishReload()
 {
 	WeaponReloading = false;
@@ -462,7 +461,7 @@ void AWeaponDefault::FinishReload()
 
 	if (NeedToReload > AviableAmmoFromInventory)
 	{
-		AdditionalWeaponInfo.Round = AviableAmmoFromInventory;
+		AdditionalWeaponInfo.Round += AviableAmmoFromInventory;
 		AmmoNeedTakeFromInv = AviableAmmoFromInventory;
 	}
 	else
@@ -473,7 +472,6 @@ void AWeaponDefault::FinishReload()
 		
 	OnWeaponReloadEnd.Broadcast(true, -AmmoNeedTakeFromInv);
 }
-
 
 void AWeaponDefault::CancelReload()
 {
