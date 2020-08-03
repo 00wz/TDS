@@ -36,7 +36,7 @@ protected:
 	void InputAimReleased();
 
 	//Inventory Inputs
-	void TrySwicthNextWeapon();
+	void TrySwitchNextWeapon();
 	void TrySwitchPreviosWeapon();
 	//Ability Inputs
 	void TryAbilityEnabled();
