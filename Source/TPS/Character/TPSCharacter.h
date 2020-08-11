@@ -171,7 +171,8 @@ public:
 	void AddEffect(UTPS_StateEffect* newEffect)override;
 	//End Interface
 
-
+	UFUNCTION(BlueprintNativeEvent)
+	void CharDead_BP();
 
 	
 };

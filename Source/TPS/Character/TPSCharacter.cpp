@@ -155,7 +155,10 @@ void ATPSCharacter::InputAxisX(float Value)
 
 void ATPSCharacter::InputAttackPressed()
 {
-	AttackCharEvent(true);
+	if (bIsAlive)
+	{
+		AttackCharEvent(true);
+	}	
 }
 
 void ATPSCharacter::InputAttackReleased()
@@ -428,7 +431,7 @@ void ATPSCharacter::InitWeapon(FName IdWeaponName, FAdditionalWeaponInfo WeaponA
 
 void ATPSCharacter::TryReloadWeapon()
 {
-	if (CurrentWeapon && !CurrentWeapon->WeaponReloading)
+	if (bIsAlive && CurrentWeapon && !CurrentWeapon->WeaponReloading)
 	{
 		if (CurrentWeapon->GetWeaponRound() < CurrentWeapon->WeaponSetting.MaxRound && CurrentWeapon->CheckCanWeaponReload())
 			CurrentWeapon->InitReload();
@@ -548,8 +551,9 @@ void ATPSCharacter::TrySwitchPreviosWeapon()
 		if (InventoryComponent)
 		{
 			//InventoryComponent->SetAdditionalInfoWeapon(OldIndex, GetCurrentWeapon()->AdditionalWeaponInfo);
-			if (InventoryComponent->SwitchWeaponToIndexByNextPreviosIndex(CurrentIndexWeapon - 1,OldIndex, OldInfo, false))
-				{ }
+			if (InventoryComponent->SwitchWeaponToIndexByNextPreviosIndex(CurrentIndexWeapon - 1, OldIndex, OldInfo, false))
+			{
+			}
 		}
 	}
 }
@@ -582,8 +586,8 @@ EPhysicalSurface ATPSCharacter::GetSurfuceType()
 					Result = myMaterial->GetPhysicalMaterial()->SurfaceType;
 				}
 			}
-		}		
-	}			
+		}
+	}
 	return Result;
 }
 
@@ -602,6 +606,11 @@ void ATPSCharacter::AddEffect(UTPS_StateEffect* newEffect)
 	Effects.Add(newEffect);
 }
 
+void ATPSCharacter::CharDead_BP_Implementation()
+{
+	//BP
+}
+
 void ATPSCharacter::CharDead()
 {
 	float TimeAnim = 0.0f;
@@ -614,11 +623,20 @@ void ATPSCharacter::CharDead()
 
 	bIsAlive = false;
 
+	if (GetController())
+	{
+		GetController()->UnPossess();
+	}
+
 	UnPossessed();
 
-	GetWorldTimerManager().SetTimer(TimerHandle_RagDollTimer,this, &ATPSCharacter::EnableRagdoll, TimeAnim, false);	
+	GetWorldTimerManager().SetTimer(TimerHandle_RagDollTimer, this, &ATPSCharacter::EnableRagdoll, TimeAnim, false);
 
 	GetCursorToWorld()->SetVisibility(false);
+
+	AttackCharEvent(false);	
+
+	CharDead_BP();
 }
 
 void ATPSCharacter::EnableRagdoll()
