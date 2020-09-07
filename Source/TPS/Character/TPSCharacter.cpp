@@ -566,7 +566,7 @@ void ATPSCharacter::TryAbilityEnabled()
 		UTPS_StateEffect* NewEffect = NewObject<UTPS_StateEffect>(this, AbilityEffect);
 		if (NewEffect)
 		{
-			NewEffect->InitObject(this);
+			NewEffect->InitObject(this, NAME_None);
 		}
 	}
 }
@@ -661,7 +661,7 @@ float ATPSCharacter::TakeDamage(float DamageAmount, struct FDamageEvent const& D
 		AProjectileDefault* myProjectile = Cast<AProjectileDefault>(DamageCauser);
 		if (myProjectile)
 		{
-			UTypes::AddEffectBySurfaceType(this, myProjectile->ProjectileSetting.Effect, GetSurfuceType());			
+			UTypes::AddEffectBySurfaceType(this, NAME_None, myProjectile->ProjectileSetting.Effect, GetSurfuceType());// to do Name_None - bone for radial damage			
 		}
 	}
 
