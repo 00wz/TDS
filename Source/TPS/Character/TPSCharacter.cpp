@@ -15,7 +15,8 @@
 #include "Engine/World.h"
 #include "Game/TPSGameInstance.h"
 #include "Weapons/Projectiles/ProjectileDefault.h"
-
+#include "TPS.h"
+#include "Net/UnrealNetwork.h"
 
 ATPSCharacter::ATPSCharacter()
 {
@@ -60,6 +61,9 @@ ATPSCharacter::ATPSCharacter()
 	// Activate ticking in order to update the cursor every frame.
 	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.bStartWithTickEnabled = true;
+
+	//NetWork option here
+	bReplicates = true;
 }
 
 void ATPSCharacter::Tick(float DeltaSeconds)
@@ -69,7 +73,7 @@ void ATPSCharacter::Tick(float DeltaSeconds)
 	if (CurrentCursor)
 	{
 		APlayerController* myPC = Cast<APlayerController>(GetController());
-		if (myPC)
+		if (myPC && myPC->IsLocalPlayerController())
 		{
 			FHitResult TraceHitResult;
 			myPC->GetHitResultUnderCursor(ECC_Visibility, true, TraceHitResult);
@@ -82,13 +86,26 @@ void ATPSCharacter::Tick(float DeltaSeconds)
 	}
 
 	MovementTick(DeltaSeconds);
+	
+	FString currentstring = "None";
+	if (CurrentCursor)
+	{
+		currentstring = CurrentCursor->GetName();
+	}
+	
+	//UE_LOG(LogTPS_Net, Log, TEXT(" current cursor = %s"), *currentstring);
 }
 
 void ATPSCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (CursorMaterial)
+	bool bIsSpawnCursor = true;
+	if (GetWorld() && GetWorld()->GetNetMode() == NM_DedicatedServer)
+	{
+		bIsSpawnCursor = false;
+	}
+	if (bIsSpawnCursor && CursorMaterial && GetLocalRole() == ROLE_AutonomousProxy || GetLocalRole() == ROLE_Authority)
 	{
 		CurrentCursor = UGameplayStatics::SpawnDecalAtLocation(GetWorld(), CursorMaterial, CursorSize, FVector(0));
 	}	
@@ -206,26 +223,35 @@ void ATPSCharacter::MovementTick(float DeltaTime)
 {
 	if (bIsAlive)
 	{
-		AddMovementInput(FVector(1.0f, 0.0f, 0.0f), AxisX);
-		AddMovementInput(FVector(0.0f, 1.0f, 0.0f), AxisY);
+		APlayerController* myController = Cast<APlayerController>(GetController());
+		if (myController && myController->IsLocalPlayerController())
+		{
+			AddMovementInput(FVector(1.0f, 0.0f, 0.0f), AxisX);
+			AddMovementInput(FVector(0.0f, 1.0f, 0.0f), AxisY);
 
-		if (MovementState == EMovementState::SprintRun_State)
-		{
-			FVector myRotationVector = FVector(AxisX, AxisY, 0.0f);
-			FRotator myRotator = myRotationVector.ToOrientationRotator();
-			SetActorRotation((FQuat(myRotator)));
-		}
-		else
-		{
-			APlayerController* myController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
-			if (myController)
+			//FString senum = UEnum::GetValueAsString(GetMovementState());
+			//UE_LOG(LogTPS_Net, Warning, TEXT("movement state - %s"), *senum);
+
+			if (GetMovementState() == EMovementState::SprintRun_State)
+			{
+				FVector myRotationVector = FVector(AxisX, AxisY, 0.0f);
+				FRotator myRotator = myRotationVector.ToOrientationRotator();
+				SetActorRotation((FQuat(myRotator)));
+
+				SetActorRotationByYaw_OnServer(myRotator.Yaw);//on client on player controller
+			}
+			else
 			{
 				FHitResult ResultHit;
+
 				//myController->GetHitResultUnderCursorByChannel(ETraceTypeQuery::TraceTypeQuery6, false, ResultHit);// bug was here Config\DefaultEngine.Ini
 				myController->GetHitResultUnderCursor(ECC_GameTraceChannel1, true, ResultHit);
 
 				float FindRotaterResultYaw = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), ResultHit.Location).Yaw;
+
 				SetActorRotation(FQuat(FRotator(0.0f, FindRotaterResultYaw, 0.0f)));
+
+				SetActorRotationByYaw_OnServer(FindRotaterResultYaw);//on client on player controller
 
 				if (CurrentWeapon)
 				{
@@ -257,8 +283,8 @@ void ATPSCharacter::MovementTick(float DeltaTime)
 					CurrentWeapon->ShootEndLocation = ResultHit.Location + Displacement;
 					//aim cursor like 3d Widget?
 				}
-			}
-		}
+			}			
+		}		
 	}	
 }
 
@@ -323,6 +349,8 @@ void ATPSCharacter::CharacterUpdate()
 
 void ATPSCharacter::ChangeMovementState()
 {
+	EMovementState NewState = EMovementState::Run_State;
+	
 	if (!WalkEnabled && !SprintRunEnabled && !AimEnabled)
 	{
 		MovementState = EMovementState::Run_State;
@@ -333,28 +361,38 @@ void ATPSCharacter::ChangeMovementState()
 		{
 			WalkEnabled = false;
 			AimEnabled = false;
-			MovementState = EMovementState::SprintRun_State;
-		}
-		if (WalkEnabled && !SprintRunEnabled && AimEnabled)
-		{
-			MovementState = EMovementState::AimWalk_State;
+			//MovementState = EMovementState::SprintRun_State;
+			NewState = EMovementState::SprintRun_State;
 		}
 		else
 		{
-			if (WalkEnabled && !SprintRunEnabled && !AimEnabled)
+			if (WalkEnabled && !SprintRunEnabled && AimEnabled)
 			{
-				MovementState = EMovementState::Walk_State;
+				//MovementState = EMovementState::AimWalk_State;
+				NewState = EMovementState::AimWalk_State;
 			}
 			else
 			{
-				if (!WalkEnabled && !SprintRunEnabled && AimEnabled)
+				if (WalkEnabled && !SprintRunEnabled && !AimEnabled)
 				{
-					MovementState = EMovementState::Aim_State;
+					//MovementState = EMovementState::Walk_State;
+					NewState = EMovementState::Walk_State;
+				}
+				else
+				{
+					if (!WalkEnabled && !SprintRunEnabled && AimEnabled)
+					{
+						//MovementState = EMovementState::Aim_State;
+						NewState = EMovementState::Aim_State;
+					}
 				}
 			}
-		}
+		}		
 	}	
-	CharacterUpdate();
+
+	SetMovementState_OnServer(NewState);
+
+	//CharacterUpdate(); on multicast
 
 	//Weapon state update
 	AWeaponDefault* myWeapon = GetCurrentWeapon();
@@ -363,7 +401,7 @@ void ATPSCharacter::ChangeMovementState()
 		myWeapon->UpdateStateWeapon(MovementState);
 	}
 }
-
+#pragma optimize ("", on)
 AWeaponDefault* ATPSCharacter::GetCurrentWeapon()
 {
 	return CurrentWeapon;
@@ -616,6 +654,33 @@ void ATPSCharacter::CharDead_BP_Implementation()
 	//BP
 }
 
+void ATPSCharacter::SetActorRotationByYaw_OnServer_Implementation(float Yaw)
+{
+	SetActorRotationByYaw_Multicast(Yaw);
+}
+
+
+void ATPSCharacter::SetActorRotationByYaw_Multicast_Implementation(float Yaw)
+{
+	if (Controller && !Controller->IsLocalPlayerController())
+	{
+		SetActorRotation(FQuat(FRotator(0.0f, Yaw, 0.0f)));
+	}
+	
+}
+
+void ATPSCharacter::SetMovementState_OnServer_Implementation(EMovementState NewState)
+{
+	SetMovementState_Multicast(NewState);
+}
+
+void ATPSCharacter::SetMovementState_Multicast_Implementation(EMovementState NewState)
+{
+	MovementState = NewState;
+
+	CharacterUpdate();
+}
+
 void ATPSCharacter::CharDead()
 {
 	float TimeAnim = 0.0f;
@@ -671,4 +736,11 @@ float ATPSCharacter::TakeDamage(float DamageAmount, struct FDamageEvent const& D
 	}
 
 	return ActualDamage;
+}
+
+void ATPSCharacter::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ATPSCharacter, MovementState);
 }

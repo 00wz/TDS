@@ -53,7 +53,7 @@ public:
 		TArray<FWeaponSlot> WeaponSlots;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapons")
 		TArray<FAmmoSlot> AmmoSlots;
-
+		
 	int32 MaxSlotsWeapon = 0;
 
 protected:

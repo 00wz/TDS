@@ -58,6 +58,7 @@ protected:
 
 	bool bIsAlive = true;
 
+	UPROPERTY(Replicated)
 	EMovementState MovementState = EMovementState::Run_State;
 	
 	AWeaponDefault* CurrentWeapon = nullptr;
@@ -96,7 +97,7 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Health", meta = (AllowPrivateAccess = "true"))
 		class UTPSCharacterHealthComponent* CharHealthComponent;
 
-	//Cursor material on decal
+	//Cursor material on decal // ToDo Change On 3D Screen or world widget
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Cursor")
 		UMaterialInterface* CursorMaterial = nullptr;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Cursor")
@@ -178,5 +179,15 @@ public:
 	void CharDead_BP();
 
 	
+	//Net
+	UFUNCTION(Server, Unreliable)
+	void SetActorRotationByYaw_OnServer(float Yaw);
+	UFUNCTION(NetMulticast, Unreliable)
+	void SetActorRotationByYaw_Multicast(float Yaw);
+
+	UFUNCTION(Server, Reliable)
+		void SetMovementState_OnServer(EMovementState NewState);
+	UFUNCTION(NetMulticast, Reliable)
+		void SetMovementState_Multicast(EMovementState NewState);
 };
 
