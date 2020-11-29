@@ -97,7 +97,7 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Health", meta = (AllowPrivateAccess = "true"))
 		class UTPSCharacterHealthComponent* CharHealthComponent;
 
-	//Cursor material on decal // ToDo Change On 3D Screen or world widget
+	//Cursor material on decal
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Cursor")
 		UMaterialInterface* CursorMaterial = nullptr;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Cursor")
@@ -178,8 +178,6 @@ public:
 	UFUNCTION(BlueprintNativeEvent)
 	void CharDead_BP();
 
-	
-	//Net
 	UFUNCTION(Server, Unreliable)
 	void SetActorRotationByYaw_OnServer(float Yaw);
 	UFUNCTION(NetMulticast, Unreliable)
