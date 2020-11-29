@@ -38,7 +38,7 @@ public:
 
 	UPROPERTY(VisibleAnywhere)
 		FWeaponInfo WeaponSetting;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Info")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Weapon Info")
 		FAdditionalWeaponInfo AdditionalWeaponInfo;
 
 	//Timers
@@ -73,7 +73,7 @@ public:
 	//shell flag
 	bool DropShellFlag = false;
 	float DropShellTimer = -1.0f;
-
+	UPROPERTY(Replicated)
 	FVector ShootEndLocation = FVector(0);
 
 protected:
@@ -95,14 +95,15 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 
-	UFUNCTION(BlueprintCallable)
-	void SetWeaponStateFire(bool bIsFire);
+	UFUNCTION(Server, Unreliable,BlueprintCallable)
+	void SetWeaponStateFire_OnServer(bool bIsFire);
 
 	bool CheckWeaponCanFire();
 
 	FProjectileInfo GetProjectile();
 
-	void UpdateStateWeapon(EMovementState NewMovementState);
+	UFUNCTION(Server, Reliable)
+	void UpdateStateWeapon_OnServer(EMovementState NewMovementState);
 	void ChangeDispersionByShot();
 	float GetCurrentDispersion() const;
 	FVector ApplyDispersionToShoot(FVector DirectionShoot)const;
@@ -126,4 +127,8 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Debug")
 		float SizeVectorToChangeShootDirectionLogic = 100.0f;
+
+	//Net
+	UFUNCTION(Server, Unreliable)
+	void UpdateWeaponByCharacterMovementState_OnServer(FVector NewShootEndLocation, bool NewShouldReduceDispersion);
 };

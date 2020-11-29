@@ -60,7 +60,7 @@ protected:
 
 	UPROPERTY(Replicated)
 	EMovementState MovementState = EMovementState::Run_State;
-	
+	UPROPERTY(Replicated)
 	AWeaponDefault* CurrentWeapon = nullptr;
 
 	UDecalComponent* CurrentCursor = nullptr;

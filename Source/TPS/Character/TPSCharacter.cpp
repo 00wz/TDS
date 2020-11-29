@@ -219,9 +219,6 @@ void ATPSCharacter::MovementTick(float DeltaTime)
 			AddMovementInput(FVector(1.0f, 0.0f, 0.0f), AxisX);
 			AddMovementInput(FVector(0.0f, 1.0f, 0.0f), AxisY);
 
-			FString SEnum = UEnum::GetValueAsString(GetMovementState());
-			UE_LOG(LogTPS_Net, Warning, TEXT("Movement state - %s"), *SEnum);
-
 			if (MovementState == EMovementState::SprintRun_State)
 			{
 				FVector myRotationVector = FVector(AxisX, AxisY, 0.0f);
@@ -247,23 +244,26 @@ void ATPSCharacter::MovementTick(float DeltaTime)
 					if (CurrentWeapon)
 					{
 						FVector Displacement = FVector(0);
+						bool bIsReduceDispersion = false;
 						switch (MovementState)
 						{
 						case EMovementState::Aim_State:
 							Displacement = FVector(0.0f, 0.0f, 160.0f);
-							CurrentWeapon->ShouldReduceDispersion = true;
+							//CurrentWeapon->ShouldReduceDispersion = true;
+							bIsReduceDispersion = true;
 							break;
-						case EMovementState::AimWalk_State:
-							CurrentWeapon->ShouldReduceDispersion = true;
+						case EMovementState::AimWalk_State:							
 							Displacement = FVector(0.0f, 0.0f, 160.0f);
+							//CurrentWeapon->ShouldReduceDispersion = true;
+							bIsReduceDispersion = true;
 							break;
 						case EMovementState::Walk_State:
 							Displacement = FVector(0.0f, 0.0f, 120.0f);
-							CurrentWeapon->ShouldReduceDispersion = false;
+							//CurrentWeapon->ShouldReduceDispersion = false;
 							break;
 						case EMovementState::Run_State:
 							Displacement = FVector(0.0f, 0.0f, 120.0f);
-							CurrentWeapon->ShouldReduceDispersion = false;
+							//CurrentWeapon->ShouldReduceDispersion = false;
 							break;
 						case EMovementState::SprintRun_State:
 							break;
@@ -271,7 +271,8 @@ void ATPSCharacter::MovementTick(float DeltaTime)
 							break;
 						}
 
-						CurrentWeapon->ShootEndLocation = ResultHit.Location + Displacement;
+						//CurrentWeapon->ShootEndLocation = ResultHit.Location + Displacement;
+						CurrentWeapon->UpdateWeaponByCharacterMovementState_OnServer(ResultHit.Location + Displacement, bIsReduceDispersion);
 						//aim cursor like 3d Widget?
 					}
 				}
@@ -306,7 +307,7 @@ void ATPSCharacter::AttackCharEvent(bool bIsFiring)
 	myWeapon = GetCurrentWeapon();
 	if (myWeapon)
 	{
-		myWeapon->SetWeaponStateFire(bIsFiring);
+		myWeapon->SetWeaponStateFire_OnServer(bIsFiring);
 	}
 	else
 		UE_LOG(LogTemp, Warning, TEXT("ATPSCharacter::AttackCharEvent - CurrentWeapon -NULL"));
@@ -378,15 +379,18 @@ void ATPSCharacter::ChangeMovementState()
 	}	
 
 	SetMovementState_OnServer(NewState);
-
+	
 	//CharacterUpdate();
 
 	//Weapon state update
 	AWeaponDefault* myWeapon = GetCurrentWeapon();
 	if (myWeapon)
 	{
-		myWeapon->UpdateStateWeapon(MovementState);
+		myWeapon->UpdateStateWeapon_OnServer(NewState);
 	}
+
+	//FString SEnum = UEnum::GetValueAsString(NewState);
+	//UE_LOG(LogTPS_Net, Warning, TEXT("Movement state on SERVER - %s"), *SEnum);
 }
 
 AWeaponDefault* ATPSCharacter::GetCurrentWeapon()
@@ -396,6 +400,12 @@ AWeaponDefault* ATPSCharacter::GetCurrentWeapon()
 
 void ATPSCharacter::InitWeapon(FName IdWeaponName, FAdditionalWeaponInfo WeaponAdditionalInfo, int32 NewCurrentIndexWeapon)
 {
+	//Go on server
+	if (GetNetMode() == ENetMode::NM_Client)
+	{
+		UE_LOG(LogTPS_Net, Warning, TEXT("InitWeapon on client "));
+	}
+
 	if (CurrentWeapon)
 	{
 		CurrentWeapon->Destroy();
@@ -430,7 +440,7 @@ void ATPSCharacter::InitWeapon(FName IdWeaponName, FAdditionalWeaponInfo WeaponA
 
 					
 					myWeapon->ReloadTime = myWeaponInfo.ReloadTime;
-					myWeapon->UpdateStateWeapon(MovementState);
+					myWeapon->UpdateStateWeapon_OnServer(MovementState);
 
 					myWeapon->AdditionalWeaponInfo = WeaponAdditionalInfo;
 
@@ -727,4 +737,5 @@ void ATPSCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLif
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(ATPSCharacter, MovementState);
+	DOREPLIFETIME(ATPSCharacter, CurrentWeapon)
 }

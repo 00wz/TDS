@@ -5,6 +5,8 @@
 #include "Kismet/GameplayStatics.h"
 #include "Engine/StaticMeshActor.h"
 #include "Character/TPSInventoryComponent.h"
+#include "Net/UnrealNetwork.h"
+#include "TPS.h"
 
 int32 DebugWeaponShow = 0;
 FAutoConsoleVariableRef CVarWeaponShow(
@@ -18,6 +20,8 @@ AWeaponDefault::AWeaponDefault()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+
+	SetReplicates(true);
 
 	SceneComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Scene"));
 	RootComponent = SceneComponent;
@@ -154,10 +158,10 @@ void AWeaponDefault::WeaponInit()
 		StaticMeshWeapon->DestroyComponent();
 	}
 
-	UpdateStateWeapon(EMovementState::Run_State);
+	UpdateStateWeapon_OnServer(EMovementState::Run_State);
 }
 
-void AWeaponDefault::SetWeaponStateFire(bool bIsFire)
+void AWeaponDefault::SetWeaponStateFire_OnServer_Implementation(bool bIsFire)
 {
 	if (CheckWeaponCanFire())
 		WeaponFiring = bIsFire;
@@ -178,6 +182,11 @@ FProjectileInfo AWeaponDefault::GetProjectile()
 
 void AWeaponDefault::Fire()
 {	
+	if (GetNetMode() == NM_Client)
+	{
+		UE_LOG(LogTPS_Net, Warning, TEXT("AWeaponDefault::Fire - OnClient "));
+	}
+
 	UAnimMontage* AnimToPlay = nullptr;
 	if (WeaponAiming)
 		AnimToPlay = WeaponSetting.AnimWeaponInfo.AnimCharFireAim;
@@ -311,7 +320,7 @@ void AWeaponDefault::Fire()
 	}
 }
 
-void AWeaponDefault::UpdateStateWeapon(EMovementState NewMovementState)
+void AWeaponDefault::UpdateStateWeapon_OnServer_Implementation(EMovementState NewMovementState)
 {	
 	BlockFire = false;
 	
@@ -348,7 +357,7 @@ void AWeaponDefault::UpdateStateWeapon(EMovementState NewMovementState)
 	case EMovementState::SprintRun_State:
 		WeaponAiming = false;
 		BlockFire = true;
-		SetWeaponStateFire(false);
+		SetWeaponStateFire_OnServer(false);
 		//Block Fire
 		break;
 	default:
@@ -582,4 +591,18 @@ void AWeaponDefault::InitDropMesh( UStaticMesh* DropMesh, FTransform Offset, FVe
 			}
 		}		
 	}
+}
+
+void AWeaponDefault::UpdateWeaponByCharacterMovementState_OnServer_Implementation(FVector NewShootEndLocation, bool NewShouldReduceDispersion)
+{
+	ShootEndLocation = NewShootEndLocation;
+	ShouldReduceDispersion = NewShouldReduceDispersion;
+}
+
+void AWeaponDefault::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(AWeaponDefault, AdditionalWeaponInfo); 
+	DOREPLIFETIME(AWeaponDefault, ShootEndLocation);
 }
