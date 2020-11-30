@@ -472,9 +472,8 @@ void ATPSCharacter::InitWeapon(FName IdWeaponName, FAdditionalWeaponInfo WeaponA
 void ATPSCharacter::TryReloadWeapon()
 {
 	if (bIsAlive && CurrentWeapon && !CurrentWeapon->WeaponReloading)
-	{
-		if (CurrentWeapon->GetWeaponRound() < CurrentWeapon->WeaponSetting.MaxRound && CurrentWeapon->CheckCanWeaponReload())
-			CurrentWeapon->InitReload();
+	{	
+		TryReloadWeapon_OnServer();			
 	}
 }
 
@@ -673,6 +672,12 @@ void ATPSCharacter::SetMovementState_Multicast_Implementation(EMovementState New
 {
 	MovementState = NewState;
 	CharacterUpdate();
+}
+
+void ATPSCharacter::TryReloadWeapon_OnServer_Implementation()
+{
+	if (CurrentWeapon->GetWeaponRound() < CurrentWeapon->WeaponSetting.MaxRound && CurrentWeapon->CheckCanWeaponReload())
+		CurrentWeapon->InitReload();
 }
 
 void ATPSCharacter::CharDead()

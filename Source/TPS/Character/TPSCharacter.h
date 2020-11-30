@@ -187,5 +187,8 @@ public:
 		void SetMovementState_OnServer(EMovementState NewState);
 	UFUNCTION(NetMulticast, Reliable)
 		void SetMovementState_Multicast(EMovementState NewState);
+
+	UFUNCTION(Server, Reliable)
+		void TryReloadWeapon_OnServer();
 };
 
