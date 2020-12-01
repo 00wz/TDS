@@ -49,9 +49,9 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Inventory")
 	FOnWeaponHaveRound OnWeaponHaveRound;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapons")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadOnly, Category = "Weapons")
 		TArray<FWeaponSlot> WeaponSlots;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapons")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadOnly, Category = "Weapons")
 		TArray<FAmmoSlot> AmmoSlots;
 		
 	int32 MaxSlotsWeapon = 0;
@@ -101,4 +101,23 @@ public:
 
 	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Inv")
 	void InitInventory_OnServer(const TArray<FWeaponSlot>& NewWeaponSlotsInfo, const TArray<FAmmoSlot>& NewAmmoSlotsInfo);
+	
+
+	UFUNCTION(NetMulticast, Reliable)
+	void AmmoChangeEvent_Multicast(EWeaponType TypeWeapon, int32 Cout);
+	UFUNCTION(NetMulticast, Reliable)
+	void SwitchWeaponEvent_Multicast(FName WeaponName, FAdditionalWeaponInfo AdditionalInfo, int32 IndexSlot);//TODO Change FName Type
+	UFUNCTION(NetMulticast, Reliable)
+	void WeaponAdditionalInfoChangeEvent_Multicast(int32 IndexSlot, FAdditionalWeaponInfo AdditionalInfo);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void WeaponAmmoEmptyEvent_Multicast(EWeaponType TypeWeapon);
+	UFUNCTION(NetMulticast, Reliable)
+	void WeaponAmmoAviableEvent_Multicast(EWeaponType TypeWeapon);
+	UFUNCTION(NetMulticast, Reliable)
+	void UpdateWeaponSlotsEvent_Multicast(int32 IndexSlotChange, FWeaponSlot NewInfo);
+	UFUNCTION(NetMulticast, Reliable)
+	void WeaponNotHaveRoundEvent_Multicast(int32 IndexSlotWeapon);
+	UFUNCTION(NetMulticast, Reliable)
+	void WeaponHaveRoundEvent_Multicast(int32 IndexSlotWeapon);
 };

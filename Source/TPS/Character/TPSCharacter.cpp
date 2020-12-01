@@ -680,6 +680,14 @@ void ATPSCharacter::TryReloadWeapon_OnServer_Implementation()
 		CurrentWeapon->InitReload();
 }
 
+void ATPSCharacter::PlayAnim_Multicast_Implementation(UAnimMontage* Anim)
+{
+	if (GetMesh() && GetMesh()->GetAnimInstance())
+	{
+		GetMesh()->GetAnimInstance()->Montage_Play(Anim);
+	}
+}
+
 void ATPSCharacter::CharDead()
 {
 	float TimeAnim = 0.0f;
@@ -687,7 +695,8 @@ void ATPSCharacter::CharDead()
 	if (DeadsAnim.IsValidIndex(rnd) && DeadsAnim[rnd] && GetMesh() && GetMesh()->GetAnimInstance())
 	{
 		TimeAnim = DeadsAnim[rnd]->GetPlayLength();
-		GetMesh()->GetAnimInstance()->Montage_Play(DeadsAnim[rnd]);
+		//GetMesh()->GetAnimInstance()->Montage_Play(DeadsAnim[rnd]);
+		PlayAnim_Multicast(DeadsAnim[rnd]);
 	}
 
 	bIsAlive = false;

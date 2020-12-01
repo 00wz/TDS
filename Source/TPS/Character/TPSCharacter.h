@@ -190,5 +190,8 @@ public:
 
 	UFUNCTION(Server, Reliable)
 		void TryReloadWeapon_OnServer();
+
+	UFUNCTION(NetMulticast, Reliable)
+		void PlayAnim_Multicast(UAnimMontage* Anim);
 };
 
