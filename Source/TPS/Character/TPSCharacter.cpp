@@ -401,11 +401,6 @@ AWeaponDefault* ATPSCharacter::GetCurrentWeapon()
 void ATPSCharacter::InitWeapon(FName IdWeaponName, FAdditionalWeaponInfo WeaponAdditionalInfo, int32 NewCurrentIndexWeapon)
 {
 	//Go on server
-	if (GetNetMode() == ENetMode::NM_Client)
-	{
-		UE_LOG(LogTPS_Net, Warning, TEXT("InitWeapon on client "));
-	}
-
 	if (CurrentWeapon)
 	{
 		CurrentWeapon->Destroy();
@@ -492,7 +487,7 @@ void ATPSCharacter::WeaponReloadEnd(bool bIsSuccess, int32 AmmoTake)
 	WeaponReloadEnd_BP(bIsSuccess);
 }
 
-bool ATPSCharacter::TrySwitchWeaponToIndexByKeyInput(int32 ToIndex)
+void ATPSCharacter::TrySwitchWeaponToIndexByKeyInput_OnServer_Implementation(int32 ToIndex)
 {
 	bool bIsSuccess = false;
 	if (CurrentWeapon && !CurrentWeapon->WeaponReloading && InventoryComponent->WeaponSlots.IsValidIndex(ToIndex))
@@ -511,16 +506,14 @@ bool ATPSCharacter::TrySwitchWeaponToIndexByKeyInput(int32 ToIndex)
 
 			bIsSuccess = InventoryComponent->SwitchWeaponByIndex(ToIndex, OldIndex, OldInfo);
 		}
-	}	
-	return bIsSuccess;
+	}		
 }
 
 void ATPSCharacter::DropCurrentWeapon()
 {	
 	if (InventoryComponent)
-	{
-		FDropItem ItemInfo;
-		InventoryComponent->DropWeapobByIndex(CurrentIndexWeapon, ItemInfo);
+	{		
+		InventoryComponent->DropWeapobByIndex_OnServer(CurrentIndexWeapon);
 	}	
 }
 
@@ -751,5 +744,6 @@ void ATPSCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLif
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(ATPSCharacter, MovementState);
-	DOREPLIFETIME(ATPSCharacter, CurrentWeapon)
+	DOREPLIFETIME(ATPSCharacter, CurrentWeapon);
+	DOREPLIFETIME(ATPSCharacter, CurrentIndexWeapon);
 }

@@ -44,7 +44,7 @@ protected:
 	template<int32 Id>
 	void TKeyPressed()
 	{
-		TrySwitchWeaponToIndexByKeyInput(Id);
+		TrySwitchWeaponToIndexByKeyInput_OnServer(Id);
 	}
 	//Inputs End
 
@@ -66,7 +66,7 @@ protected:
 	UDecalComponent* CurrentCursor = nullptr;
 
 	TArray<UTPS_StateEffect*> Effects;
-
+	UPROPERTY(Replicated)
 	int32 CurrentIndexWeapon = 0;
 
 	UFUNCTION()
@@ -144,7 +144,8 @@ public:
 	UFUNCTION()
 	void WeaponReloadEnd(bool bIsSuccess, int32 AmmoSafe);
 	//
-	bool TrySwitchWeaponToIndexByKeyInput(int32 ToIndex);
+	UFUNCTION(Server, Reliable)
+	void TrySwitchWeaponToIndexByKeyInput_OnServer(int32 ToIndex);
 	void DropCurrentWeapon();
 	UFUNCTION(BlueprintNativeEvent)
 		void WeaponReloadStart_BP(UAnimMontage* Anim);

@@ -249,7 +249,7 @@ bool UTPSInventoryComponent::SwitchWeaponToIndexByNextPreviosIndex(int32 ChangeT
 		SetAdditionalInfoWeapon(OldIndex,OldInfo);
 
 		//OnSwitchWeapon.Broadcast(NewIdWeapon, NewAdditionalInfo, NewCurrentIndex);
-		SwitchWeaponEvent_Multicast(NewIdWeapon,NewAdditionalInfo,NewCurrentIndex);
+		SwitchWeaponEvent_OnServer(NewIdWeapon,NewAdditionalInfo,NewCurrentIndex);
 	}		
 
 	return bIsSuccess;
@@ -269,7 +269,7 @@ bool UTPSInventoryComponent::SwitchWeaponByIndex(int32 IndexWeaponToChange, int3
 		SetAdditionalInfoWeapon(PreviosIndex, PreviosWeaponInfo);
 
 		//OnSwitchWeapon.Broadcast(ToSwitchIdWeapon, ToSwitchAdditionalInfo, IndexWeaponToChange);
-		SwitchWeaponEvent_Multicast(ToSwitchIdWeapon,ToSwitchAdditionalInfo,IndexWeaponToChange);
+		SwitchWeaponEvent_OnServer(ToSwitchIdWeapon,ToSwitchAdditionalInfo,IndexWeaponToChange);
 
 		//check ammo slot for event to player		
 		EWeaponType ToSwitchWeaponType;
@@ -501,7 +501,7 @@ bool UTPSInventoryComponent::SwitchWeaponToInventory(FWeaponSlot NewWeapon, int3
 	return result;
 }
 
-bool UTPSInventoryComponent::TryGetWeaponToInventory(FWeaponSlot NewWeapon)
+void UTPSInventoryComponent::TryGetWeaponToInventory_OnServer_Implementation(AActor* PickUpActor, FWeaponSlot NewWeapon)
 {
 	int32 indexSlot = -1;
 	if (CheckCanTakeWeapon(indexSlot))
@@ -511,15 +511,19 @@ bool UTPSInventoryComponent::TryGetWeaponToInventory(FWeaponSlot NewWeapon)
 			WeaponSlots[indexSlot] = NewWeapon;
 
 			//OnUpdateWeaponSlots.Broadcast(indexSlot, NewWeapon);	
-			UpdateWeaponSlotsEvent_Multicast(indexSlot, NewWeapon);
-			return true;
+			UpdateWeaponSlotsEvent_Multicast(indexSlot, NewWeapon);		
+			
+			if (PickUpActor)
+			{
+				PickUpActor->Destroy();
+			}
 		}			
 	}
-	return false;
 }
 
-void UTPSInventoryComponent::DropWeapobByIndex(int32 ByIndex, FDropItem &DropItemInfo)
+void UTPSInventoryComponent::DropWeapobByIndex_OnServer_Implementation(int32 ByIndex)
 {
+	FDropItem DropItemInfo;
 	FWeaponSlot EmtyWeaponSlot;
 	
 	bool bIsCanDrop = false;
@@ -537,8 +541,7 @@ void UTPSInventoryComponent::DropWeapobByIndex(int32 ByIndex, FDropItem &DropIte
 	}
 
 	if (bIsCanDrop && WeaponSlots.IsValidIndex(ByIndex) && GetDropItemInfoFromInventory(ByIndex, DropItemInfo))
-	{
-		GetDropItemInfoFromInventory(ByIndex, DropItemInfo);
+	{		
 	
 		//switch weapon to valid slot weapon from start weapon slots array
 		bool bIsFindWeapon = false;
@@ -548,7 +551,7 @@ void UTPSInventoryComponent::DropWeapobByIndex(int32 ByIndex, FDropItem &DropIte
 			if (!WeaponSlots[j].NameItem.IsNone())
 			{
 				//OnSwitchWeapon.Broadcast(WeaponSlots[j].NameItem, WeaponSlots[j].AdditionalInfo, j);
-				SwitchWeaponEvent_Multicast(WeaponSlots[j].NameItem, WeaponSlots[j].AdditionalInfo, j);
+				SwitchWeaponEvent_OnServer(WeaponSlots[j].NameItem, WeaponSlots[j].AdditionalInfo, j);
 			}
 			j++;
 		}
@@ -606,7 +609,7 @@ void UTPSInventoryComponent::InitInventory_OnServer_Implementation(const TArray<
 		if (!WeaponSlots[0].NameItem.IsNone())
 		{
 			//OnSwitchWeapon.Broadcast(WeaponSlots[0].NameItem, WeaponSlots[0].AdditionalInfo, 0);
-			SwitchWeaponEvent_Multicast(WeaponSlots[0].NameItem, WeaponSlots[0].AdditionalInfo, 0);
+			SwitchWeaponEvent_OnServer(WeaponSlots[0].NameItem, WeaponSlots[0].AdditionalInfo, 0);
 		}
 			
 			
@@ -618,7 +621,7 @@ void UTPSInventoryComponent::AmmoChangeEvent_Multicast_Implementation(EWeaponTyp
 	OnAmmoChange.Broadcast(TypeWeapon, Cout);
 }
 
-void UTPSInventoryComponent::SwitchWeaponEvent_Multicast_Implementation(FName WeaponName, FAdditionalWeaponInfo AdditionalInfo, int32 IndexSlot)
+void UTPSInventoryComponent::SwitchWeaponEvent_OnServer_Implementation(FName WeaponName, FAdditionalWeaponInfo AdditionalInfo, int32 IndexSlot)
 {
 	OnSwitchWeapon.Broadcast(WeaponName,AdditionalInfo,IndexSlot);
 }
