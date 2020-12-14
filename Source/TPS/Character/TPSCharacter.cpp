@@ -724,7 +724,7 @@ float ATPSCharacter::TakeDamage(float DamageAmount, struct FDamageEvent const& D
 	float ActualDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 	if (bIsAlive)
 	{
-		CharHealthComponent->ChangeHealthValue(-DamageAmount);
+		CharHealthComponent->ChangeHealthValue_OnServer(-DamageAmount);
 	}
 			
 	if (DamageEvent.IsOfType(FRadialDamageEvent::ClassID))

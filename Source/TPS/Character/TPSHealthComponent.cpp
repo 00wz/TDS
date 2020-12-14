@@ -2,6 +2,7 @@
 
 
 #include "TPSHealthComponent.h"
+#include "Net/UnrealNetwork.h"
 
 // Sets default values for this component's properties
 UTPSHealthComponent::UTPSHealthComponent()
@@ -43,7 +44,7 @@ void UTPSHealthComponent::SetCurrentHealth(float NewHealth)
 	Health = NewHealth;
 }
 
-void UTPSHealthComponent::ChangeHealthValue(float ChangeValue)
+void UTPSHealthComponent::ChangeHealthValue_OnServer_Implementation(float ChangeValue)
 {
 	ChangeValue = ChangeValue*CoefDamage;
 
@@ -76,3 +77,9 @@ void UTPSHealthComponent::DeadEvent_Multicast_Implementation()
 	OnDead.Broadcast();
 }
 
+void UTPSHealthComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(UTPSHealthComponent, Health);
+}

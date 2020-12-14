@@ -26,7 +26,14 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setting")
 	bool bIsStakable = false;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setting ExecuteTimer")
+	UParticleSystem* ParticleEffect = nullptr;
+	UParticleSystemComponent* ParticleEmitter = nullptr;
+
 	AActor* myActor = nullptr;
+
+	UFUNCTION(NetMulticast, Reliable)
+	void FXSpawnByStateEffect_Multicast(UParticleSystem* Effect, FName NameBoneHit);
 };
 
 UCLASS()
@@ -50,7 +57,8 @@ class TPS_API UTPS_StateEffect_ExecuteTimer : public UTPS_StateEffect
 	GENERATED_BODY()
 
 public:
-	bool InitObject(AActor* Actor, FName NameBoneHit) override;
+	bool InitObject(AActor* Actor, FName NameBoneHit) override;	
+
 	void DestroyObject() override;
 
 	virtual void Execute();
@@ -64,8 +72,4 @@ public:
 
 	FTimerHandle TimerHandle_ExecuteTimer;
 	FTimerHandle TimerHandle_EffectTimer;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setting ExecuteTimer")
-	UParticleSystem* ParticleEffect = nullptr;
-
-	UParticleSystemComponent* ParticleEmitter = nullptr;
 };

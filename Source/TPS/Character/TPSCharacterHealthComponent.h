@@ -35,7 +35,7 @@ protected:
 
 public:
 
-	void ChangeHealthValue(float ChangeValue) override;
+	void ChangeHealthValue_OnServer(float ChangeValue) override;
 
 	float GetCurrentShield();
 

@@ -5,7 +5,7 @@
 
 
 
-void UTPSCharacterHealthComponent::ChangeHealthValue(float ChangeValue)
+void UTPSCharacterHealthComponent::ChangeHealthValue_OnServer(float ChangeValue)
 {
 	float CurrentDamage = ChangeValue * CoefDamage;
 
@@ -21,7 +21,7 @@ void UTPSCharacterHealthComponent::ChangeHealthValue(float ChangeValue)
 	}
 	else
 	{
-		Super::ChangeHealthValue(ChangeValue);
+		Super::ChangeHealthValue_OnServer(ChangeValue);
 	}
 }
 
