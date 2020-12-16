@@ -65,8 +65,12 @@ bool UTPS_StateEffect_ExecuteTimer::InitObject(AActor* Actor, FName NameBoneHit)
 {
 	Super::InitObject(Actor, NameBoneHit);
 
-	GetWorld()->GetTimerManager().SetTimer(TimerHandle_EffectTimer, this, &UTPS_StateEffect_ExecuteTimer::DestroyObject, Timer, false);
-	GetWorld()->GetTimerManager().SetTimer(TimerHandle_ExecuteTimer, this, &UTPS_StateEffect_ExecuteTimer::Execute, RateTime, true);
+	if (GetWorld())
+	{
+		GetWorld()->GetTimerManager().SetTimer(TimerHandle_EffectTimer, this, &UTPS_StateEffect_ExecuteTimer::DestroyObject, Timer, false);
+		GetWorld()->GetTimerManager().SetTimer(TimerHandle_ExecuteTimer, this, &UTPS_StateEffect_ExecuteTimer::Execute, RateTime, true);
+	}
+	
 	
 	if (ParticleEffect)
 	{
@@ -78,6 +82,11 @@ bool UTPS_StateEffect_ExecuteTimer::InitObject(AActor* Actor, FName NameBoneHit)
 
 void UTPS_StateEffect_ExecuteTimer::DestroyObject()
 {
+	if (GetWorld())
+	{
+		GetWorld()->GetTimerManager().ClearAllTimersForObject(this);
+	}
+
 	ParticleEmitter->DestroyComponent();
 	ParticleEmitter = nullptr;
 	Super::DestroyObject();

@@ -631,11 +631,15 @@ TArray<UTPS_StateEffect*> ATPSCharacter::GetAllCurrentEffects()
 void ATPSCharacter::RemoveEffect(UTPS_StateEffect* RemoveEffect)
 {
 	Effects.Remove(RemoveEffect);
+
+
 }
 
 void ATPSCharacter::AddEffect(UTPS_StateEffect* newEffect)
 {
 	Effects.Add(newEffect);
+
+
 }
 
 void ATPSCharacter::CharDead_BP_Implementation()

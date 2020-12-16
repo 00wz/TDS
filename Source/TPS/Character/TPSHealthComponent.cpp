@@ -82,4 +82,5 @@ void UTPSHealthComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& 
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(UTPSHealthComponent, Health);
+
 }
