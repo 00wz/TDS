@@ -17,6 +17,9 @@ class ATPSCharacter : public ACharacter, public ITPS_IGameActor
 {
 	GENERATED_BODY()
 protected:
+
+	bool ReplicateSubobjects(class UActorChannel* Channel, class FOutBunch* Bunch, FReplicationFlags* RepFlags) override;
+
 	virtual void BeginPlay() override;
 
 	//Inputs
@@ -65,7 +68,12 @@ protected:
 
 	UDecalComponent* CurrentCursor = nullptr;
 
+	UPROPERTY(Replicated)
 	TArray<UTPS_StateEffect*> Effects;
+	UPROPERTY(ReplicatedUsing = EffectAdd_OnRep);
+	UTPS_StateEffect* EffectAdd = nullptr;
+	UPROPERTY(ReplicatedUsing = EffectRemove_OnRep);
+	UTPS_StateEffect* EffectRemove = nullptr;
 	UPROPERTY(Replicated)
 	int32 CurrentIndexWeapon = 0;
 
@@ -111,6 +119,8 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability")
 		TSubclassOf<UTPS_StateEffect> AbilityEffect;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Debug")
+		TArray<UParticleSystemComponent*> ParticleSystemEffects;
 
 private:
 	/** Top down camera */
@@ -172,8 +182,14 @@ public:
 	//Interface
 	EPhysicalSurface GetSurfuceType() override;
 	TArray<UTPS_StateEffect*> GetAllCurrentEffects() override;
-	void RemoveEffect(UTPS_StateEffect* RemoveEffect)override;
-	void AddEffect(UTPS_StateEffect* newEffect)override;
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+		void RemoveEffect(UTPS_StateEffect* RemoveEffect);
+	void RemoveEffect_Implementation(UTPS_StateEffect* RemoveEffect)override;
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+		void AddEffect(UTPS_StateEffect* newEffect);
+	void AddEffect_Implementation(UTPS_StateEffect* newEffect)override;
+
 	//End Interface
 
 	UFUNCTION(BlueprintNativeEvent)
@@ -194,5 +210,14 @@ public:
 
 	UFUNCTION(NetMulticast, Reliable)
 		void PlayAnim_Multicast(UAnimMontage* Anim);
+
+	UFUNCTION()
+		void SwitchEffect(UTPS_StateEffect* Effect, bool bIsAdd);
+
+		UFUNCTION()
+	void EffectAdd_OnRep();
+		UFUNCTION()
+	void EffectRemove_OnRep();
+
 };
 

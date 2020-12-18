@@ -17,7 +17,8 @@
 #include "Weapons/Projectiles/ProjectileDefault.h"
 #include "TPS.h"
 #include "Net/UnrealNetwork.h"
-
+#include "Particles/ParticleSystemComponent.h"
+#include "Engine/ActorChannel.h"
 
 ATPSCharacter::ATPSCharacter()
 {
@@ -627,19 +628,26 @@ TArray<UTPS_StateEffect*> ATPSCharacter::GetAllCurrentEffects()
 {
 	return Effects;
 }
-
-void ATPSCharacter::RemoveEffect(UTPS_StateEffect* RemoveEffect)
+#pragma optimize ("", off)
+void ATPSCharacter::RemoveEffect_Implementation(UTPS_StateEffect* RemoveEffect)
 {
 	Effects.Remove(RemoveEffect);
 
+	//SwitchEffect_OnServer(RemoveEffect, false);
 
+	EffectRemove = RemoveEffect;
+	SwitchEffect(EffectRemove, false);
 }
 
-void ATPSCharacter::AddEffect(UTPS_StateEffect* newEffect)
+void ATPSCharacter::AddEffect_Implementation(UTPS_StateEffect* newEffect)
 {
 	Effects.Add(newEffect);
 
+	//SwitchEffect_OnServer(newEffect, true);
 
+	EffectAdd = newEffect;
+
+	SwitchEffect(EffectAdd, true);
 }
 
 void ATPSCharacter::CharDead_BP_Implementation()
@@ -682,6 +690,59 @@ void ATPSCharacter::PlayAnim_Multicast_Implementation(UAnimMontage* Anim)
 	if (GetMesh() && GetMesh()->GetAnimInstance())
 	{
 		GetMesh()->GetAnimInstance()->Montage_Play(Anim);
+	}
+}
+
+void ATPSCharacter::SwitchEffect(UTPS_StateEffect* Effect, bool bIsAdd)
+{
+	if (bIsAdd)
+	{
+		if (Effect && Effect->ParticleEffect)
+		{
+			FName NameBoneToAttached = Effect->BoneName;
+			FVector Loc = FVector(0);
+
+			USkeletalMeshComponent* myMesh = GetMesh();
+			if (myMesh)
+			{
+				UParticleSystemComponent* newPartileSystem = UGameplayStatics::SpawnEmitterAttached(Effect->ParticleEffect, myMesh, NameBoneToAttached, Loc, FRotator::ZeroRotator, EAttachLocation::SnapToTarget, false);
+				ParticleSystemEffects.Add(newPartileSystem);
+				//newPartileSystem->Template
+			}
+		}
+	}
+	else
+	{
+		int32 i = 0;
+		bool bIsFind = false;
+		while (i < ParticleSystemEffects.Num() && !bIsFind)
+		{
+			if (ParticleSystemEffects[i]->Template && Effect->ParticleEffect && Effect->ParticleEffect == ParticleSystemEffects[i]->Template)
+			{
+				bIsFind = true;
+				ParticleSystemEffects[i]->DeactivateSystem();
+				ParticleSystemEffects[i]->DestroyComponent();
+				ParticleSystemEffects.RemoveAt(i);
+			}
+			i++;
+		}
+	}
+	
+}
+
+void ATPSCharacter::EffectAdd_OnRep()
+{
+	if (EffectAdd)
+	{
+		SwitchEffect(EffectAdd, true);
+	}
+}
+
+void ATPSCharacter::EffectRemove_OnRep()
+{
+	if (EffectRemove)
+	{
+		SwitchEffect(EffectRemove, false);
 	}
 }
 
@@ -743,6 +804,18 @@ float ATPSCharacter::TakeDamage(float DamageAmount, struct FDamageEvent const& D
 	return ActualDamage;
 }
 
+bool ATPSCharacter::ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags)
+{
+	bool Wrote = Super::ReplicateSubobjects(Channel, Bunch, RepFlags);
+
+	for (int32 i = 0; i < Effects.Num(); i++)
+	{
+		if (Effects[i]) { Wrote |= Channel->ReplicateSubobject(Effects[i], *Bunch, *RepFlags); }
+	}
+
+	return Wrote;
+}
+
 void ATPSCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
@@ -750,4 +823,8 @@ void ATPSCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLif
 	DOREPLIFETIME(ATPSCharacter, MovementState);
 	DOREPLIFETIME(ATPSCharacter, CurrentWeapon);
 	DOREPLIFETIME(ATPSCharacter, CurrentIndexWeapon);
+	DOREPLIFETIME(ATPSCharacter, Effects);
+	DOREPLIFETIME(ATPSCharacter, EffectAdd);
+	DOREPLIFETIME(ATPSCharacter, EffectRemove);
 }
+#pragma optimize ("", on)

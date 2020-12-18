@@ -10,11 +10,12 @@ bool UTPS_StateEffect::InitObject(AActor* Actor, FName NameBoneHit)
 {
 	
 	myActor = Actor;
-
+	BoneName = NameBoneHit;
 	ITPS_IGameActor* myInterface = Cast<ITPS_IGameActor>(myActor);
 	if (myInterface)
 	{
-		myInterface->AddEffect(this);
+		//myInterface->Execute_AddEffect(this);
+		ITPS_IGameActor::Execute_AddEffect(myActor,this);
 	}
 
 	return true;
@@ -25,7 +26,7 @@ void UTPS_StateEffect::DestroyObject()
 	ITPS_IGameActor* myInterface = Cast<ITPS_IGameActor>(myActor);
 	if (myInterface)
 	{
-		myInterface->RemoveEffect(this);
+		myInterface->Execute_RemoveEffect(myActor,this);
 	}
 
 	myActor = nullptr;
@@ -65,16 +66,12 @@ bool UTPS_StateEffect_ExecuteTimer::InitObject(AActor* Actor, FName NameBoneHit)
 {
 	Super::InitObject(Actor, NameBoneHit);
 
-	if (GetWorld())
-	{
-		GetWorld()->GetTimerManager().SetTimer(TimerHandle_EffectTimer, this, &UTPS_StateEffect_ExecuteTimer::DestroyObject, Timer, false);
-		GetWorld()->GetTimerManager().SetTimer(TimerHandle_ExecuteTimer, this, &UTPS_StateEffect_ExecuteTimer::Execute, RateTime, true);
-	}
-	
+	GetWorld()->GetTimerManager().SetTimer(TimerHandle_EffectTimer, this, &UTPS_StateEffect_ExecuteTimer::DestroyObject, Timer, false);
+	GetWorld()->GetTimerManager().SetTimer(TimerHandle_ExecuteTimer, this, &UTPS_StateEffect_ExecuteTimer::Execute, RateTime, true);
 	
 	if (ParticleEffect)
 	{
-		FXSpawnByStateEffect_Multicast(ParticleEffect, NameBoneHit);		
+		//FXSpawnByStateEffect_Multicast(ParticleEffect, NameBoneHit);		
 	}
 	
 	return true;
@@ -82,13 +79,8 @@ bool UTPS_StateEffect_ExecuteTimer::InitObject(AActor* Actor, FName NameBoneHit)
 
 void UTPS_StateEffect_ExecuteTimer::DestroyObject()
 {
-	if (GetWorld())
-	{
-		GetWorld()->GetTimerManager().ClearAllTimersForObject(this);
-	}
-
-	ParticleEmitter->DestroyComponent();
-	ParticleEmitter = nullptr;
+	//ParticleEmitter->DestroyComponent();
+	//ParticleEmitter = nullptr;
 	Super::DestroyObject();
 }
 
