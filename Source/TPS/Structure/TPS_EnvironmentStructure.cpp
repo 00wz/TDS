@@ -4,9 +4,10 @@
 #include "TPS_EnvironmentStructure.h"
 #include "Materials/MaterialInterface.h"
 #include "PhysicalMaterials/PhysicalMaterial.h"
-#include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
+#include "Particles/ParticleSystemComponent.h"
 #include "Engine/ActorChannel.h"
+#include "Kismet/GameplayStatics.h"
 
 // Sets default values
 ATPS_EnvironmentStructure::ATPS_EnvironmentStructure()
@@ -54,51 +55,29 @@ void ATPS_EnvironmentStructure::RemoveEffect_Implementation(UTPS_StateEffect* Re
 {
 	Effects.Remove(RemoveEffect);
 
-	EffectRemove = RemoveEffect;
-	SwitchEffect(EffectRemove, false);
+	if (!RemoveEffect->bIsAutoDestroyParticleEffect)
+	{
+		SwitchEffect(RemoveEffect, false);
+		EffectRemove = RemoveEffect;
+	}
 }
 
 void ATPS_EnvironmentStructure::AddEffect_Implementation(UTPS_StateEffect* newEffect)
 {
 	Effects.Add(newEffect);
 
-	EffectAdd = newEffect;
-	SwitchEffect(EffectAdd, true);
-}
-
-void ATPS_EnvironmentStructure::SwitchEffect(UTPS_StateEffect* Effect, bool bIsAdd)
-{
-	if (bIsAdd)
+	if (!newEffect->bIsAutoDestroyParticleEffect)
 	{
-		if (Effect && Effect->ParticleEffect)
-		{
-			FName NameBoneToAttached = Effect->BoneName;
-			FVector Loc = OffsetEffect;
-
-			USceneComponent* SceneComponent = GetRootComponent();
-			if (SceneComponent)
-			{
-				UParticleSystemComponent* newPartileSystem = UGameplayStatics::SpawnEmitterAttached(Effect->ParticleEffect, SceneComponent, NAME_None, Loc, FRotator::ZeroRotator, EAttachLocation::SnapToTarget, false);
-				ParticleSystemEffects.Add(newPartileSystem);
-			}
-		}
+		SwitchEffect(newEffect, true);
+		EffectAdd = newEffect;
 	}
 	else
 	{
-		int32 i = 0;
-		bool bIsFind = false;
-		while (i < ParticleSystemEffects.Num() && !bIsFind)
+		if (newEffect->ParticleEffect)
 		{
-			if (ParticleSystemEffects[i]->Template && Effect->ParticleEffect && Effect->ParticleEffect == ParticleSystemEffects[i]->Template)
-			{
-				bIsFind = true;
-				ParticleSystemEffects[i]->DeactivateSystem();
-				ParticleSystemEffects[i]->DestroyComponent();
-				ParticleSystemEffects.RemoveAt(i);
-			}
-			i++;
+			ExecuteEffectAdded_OnServer(newEffect->ParticleEffect);
 		}
-	}	
+	}
 }
 
 void ATPS_EnvironmentStructure::EffectAdd_OnRep()
@@ -117,6 +96,54 @@ void ATPS_EnvironmentStructure::EffectRemove_OnRep()
 	}
 }
 
+void ATPS_EnvironmentStructure::ExecuteEffectAdded_OnServer_Implementation(UParticleSystem* ExecuteFX)
+{
+	ExecuteEffectAdded_Multicast(ExecuteFX);
+}
+
+void ATPS_EnvironmentStructure::ExecuteEffectAdded_Multicast_Implementation(UParticleSystem* ExecuteFX)
+{
+	UTypes::ExecuteEffectAdded(ExecuteFX, this, OffsetEffect, NAME_None);
+}
+
+void ATPS_EnvironmentStructure::SwitchEffect(UTPS_StateEffect* Effect, bool bIsAdd)
+{
+	if (bIsAdd)
+	{
+		if (Effect && Effect->ParticleEffect)
+		{
+			FName NameBoneToAttached = NAME_None;
+			FVector Loc = OffsetEffect;
+
+			USceneComponent* mySceneComp = GetRootComponent();
+			if (mySceneComp)
+			{
+				UParticleSystemComponent* newParticleSystem = UGameplayStatics::SpawnEmitterAttached(Effect->ParticleEffect, mySceneComp, NameBoneToAttached, Loc, FRotator::ZeroRotator, EAttachLocation::SnapToTarget, false);
+				ParticleSystemEffects.Add(newParticleSystem);
+			}
+		}
+	}
+	else
+	{
+		int32 i = 0;
+		bool bIsFind = false;
+		if (ParticleSystemEffects.Num() > 0)
+		{
+			while (i < ParticleSystemEffects.Num(), !bIsFind)
+			{
+				if (ParticleSystemEffects[i]->Template && Effect->ParticleEffect && Effect->ParticleEffect == ParticleSystemEffects[i]->Template)
+				{
+					bIsFind = true;
+					ParticleSystemEffects[i]->DeactivateSystem();
+					ParticleSystemEffects[i]->DestroyComponent();
+					ParticleSystemEffects.RemoveAt(i);
+				}
+				i++;
+			}
+		}		
+	}
+}
+
 bool ATPS_EnvironmentStructure::ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags)
 {
 	bool Wrote = Super::ReplicateSubobjects(Channel, Bunch, RepFlags);
@@ -125,7 +152,6 @@ bool ATPS_EnvironmentStructure::ReplicateSubobjects(UActorChannel* Channel, FOut
 	{
 		if (Effects[i]) { Wrote |= Channel->ReplicateSubobject(Effects[i], *Bunch, *RepFlags); }
 	}
-
 	return Wrote;
 }
 

@@ -17,10 +17,8 @@ class ATPSCharacter : public ACharacter, public ITPS_IGameActor
 {
 	GENERATED_BODY()
 protected:
-
 	bool ReplicateSubobjects(class UActorChannel* Channel, class FOutBunch* Bunch, FReplicationFlags* RepFlags) override;
-
-	virtual void BeginPlay() override;
+	void BeginPlay() override;
 
 	//Inputs
 	void InputAxisY(float Value);
@@ -70,10 +68,14 @@ protected:
 
 	UPROPERTY(Replicated)
 	TArray<UTPS_StateEffect*> Effects;
-	UPROPERTY(ReplicatedUsing = EffectAdd_OnRep);
+	UPROPERTY(ReplicatedUsing = EffectAdd_OnRep)
 	UTPS_StateEffect* EffectAdd = nullptr;
-	UPROPERTY(ReplicatedUsing = EffectRemove_OnRep);
+	UPROPERTY(ReplicatedUsing = EffectRemove_OnRep)
 	UTPS_StateEffect* EffectRemove = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Debug")
+	TArray<UParticleSystemComponent*> ParticleSystemEffects;
+
 	UPROPERTY(Replicated)
 	int32 CurrentIndexWeapon = 0;
 
@@ -119,8 +121,6 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability")
 		TSubclassOf<UTPS_StateEffect> AbilityEffect;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Debug")
-		TArray<UParticleSystemComponent*> ParticleSystemEffects;
 
 private:
 	/** Top down camera */
@@ -182,14 +182,12 @@ public:
 	//Interface
 	EPhysicalSurface GetSurfuceType() override;
 	TArray<UTPS_StateEffect*> GetAllCurrentEffects() override;
-
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 		void RemoveEffect(UTPS_StateEffect* RemoveEffect);
 	void RemoveEffect_Implementation(UTPS_StateEffect* RemoveEffect)override;
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 		void AddEffect(UTPS_StateEffect* newEffect);
 	void AddEffect_Implementation(UTPS_StateEffect* newEffect)override;
-
 	//End Interface
 
 	UFUNCTION(BlueprintNativeEvent)
@@ -212,12 +210,17 @@ public:
 		void PlayAnim_Multicast(UAnimMontage* Anim);
 
 	UFUNCTION()
-		void SwitchEffect(UTPS_StateEffect* Effect, bool bIsAdd);
+		void EffectAdd_OnRep();
+	UFUNCTION()
+		void EffectRemove_OnRep();
 
-		UFUNCTION()
-	void EffectAdd_OnRep();
-		UFUNCTION()
-	void EffectRemove_OnRep();
+	UFUNCTION(Server, Reliable)
+		void ExecuteEffectAdded_OnServer(UParticleSystem* ExecuteFX);
 
+	UFUNCTION(NetMulticast, Reliable)
+		void ExecuteEffectAdded_Multicast(UParticleSystem* ExecuteFX);
+	
+	UFUNCTION()
+	void SwitchEffect(UTPS_StateEffect* Effect, bool bIsAdd);
 };
 

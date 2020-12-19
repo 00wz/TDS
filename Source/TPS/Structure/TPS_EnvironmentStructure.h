@@ -29,7 +29,6 @@ public:
 	EPhysicalSurface GetSurfuceType() override;	
 	
 	TArray<UTPS_StateEffect*> GetAllCurrentEffects() override;
-
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 		void RemoveEffect(UTPS_StateEffect* RemoveEffect);
 	void RemoveEffect_Implementation(UTPS_StateEffect* RemoveEffect)override;
@@ -40,23 +39,27 @@ public:
 	//Effect
 	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Setting")
 	TArray<UTPS_StateEffect*> Effects;
+	UPROPERTY(ReplicatedUsing = EffectAdd_OnRep)
+		UTPS_StateEffect* EffectAdd = nullptr;
+	UPROPERTY(ReplicatedUsing = EffectRemove_OnRep)
+		UTPS_StateEffect* EffectRemove = nullptr;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Debug")
-	TArray<UParticleSystemComponent*> ParticleSystemEffects;
+		TArray<UParticleSystemComponent*> ParticleSystemEffects;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setting")
-	FVector OffsetEffect = FVector(0);
-
-	UFUNCTION()
-	void SwitchEffect(UTPS_StateEffect* Effect, bool bIsAdd);
-
-	UPROPERTY(ReplicatedUsing = EffectAdd_OnRep);
-	UTPS_StateEffect* EffectAdd = nullptr;
-	UPROPERTY(ReplicatedUsing = EffectRemove_OnRep);
-	UTPS_StateEffect* EffectRemove = nullptr;
+		FVector OffsetEffect = FVector(0);
 
 	UFUNCTION()
 		void EffectAdd_OnRep();
 	UFUNCTION()
 		void EffectRemove_OnRep();
 
+	UFUNCTION(Server, Reliable)
+		void ExecuteEffectAdded_OnServer(UParticleSystem* ExecuteFX);
 
+	UFUNCTION(NetMulticast, Reliable)
+		void ExecuteEffectAdded_Multicast(UParticleSystem* ExecuteFX);
+
+	UFUNCTION()
+		void SwitchEffect(UTPS_StateEffect* Effect, bool bIsAdd);
 };

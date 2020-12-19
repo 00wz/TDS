@@ -19,6 +19,7 @@
 #include "Net/UnrealNetwork.h"
 #include "Particles/ParticleSystemComponent.h"
 #include "Engine/ActorChannel.h"
+#pragma optimize ("", off)
 
 ATPSCharacter::ATPSCharacter()
 {
@@ -628,26 +629,34 @@ TArray<UTPS_StateEffect*> ATPSCharacter::GetAllCurrentEffects()
 {
 	return Effects;
 }
-#pragma optimize ("", off)
+
 void ATPSCharacter::RemoveEffect_Implementation(UTPS_StateEffect* RemoveEffect)
 {
 	Effects.Remove(RemoveEffect);
 
-	//SwitchEffect_OnServer(RemoveEffect, false);
-
-	EffectRemove = RemoveEffect;
-	SwitchEffect(EffectRemove, false);
+	if (!RemoveEffect->bIsAutoDestroyParticleEffect)
+	{
+		SwitchEffect(RemoveEffect, false);
+		EffectRemove = RemoveEffect;
+	}
 }
 
 void ATPSCharacter::AddEffect_Implementation(UTPS_StateEffect* newEffect)
 {
 	Effects.Add(newEffect);
 
-	//SwitchEffect_OnServer(newEffect, true);
-
-	EffectAdd = newEffect;
-
-	SwitchEffect(EffectAdd, true);
+	if (!newEffect->bIsAutoDestroyParticleEffect)
+	{
+		SwitchEffect(newEffect, true);
+		EffectAdd = newEffect;
+	}
+	else
+	{
+		if (newEffect->ParticleEffect)
+		{
+			ExecuteEffectAdded_OnServer(newEffect->ParticleEffect);
+		}
+	}
 }
 
 void ATPSCharacter::CharDead_BP_Implementation()
@@ -693,49 +702,12 @@ void ATPSCharacter::PlayAnim_Multicast_Implementation(UAnimMontage* Anim)
 	}
 }
 
-void ATPSCharacter::SwitchEffect(UTPS_StateEffect* Effect, bool bIsAdd)
-{
-	if (bIsAdd)
-	{
-		if (Effect && Effect->ParticleEffect)
-		{
-			FName NameBoneToAttached = Effect->BoneName;
-			FVector Loc = FVector(0);
-
-			USkeletalMeshComponent* myMesh = GetMesh();
-			if (myMesh)
-			{
-				UParticleSystemComponent* newPartileSystem = UGameplayStatics::SpawnEmitterAttached(Effect->ParticleEffect, myMesh, NameBoneToAttached, Loc, FRotator::ZeroRotator, EAttachLocation::SnapToTarget, false);
-				ParticleSystemEffects.Add(newPartileSystem);
-				//newPartileSystem->Template
-			}
-		}
-	}
-	else
-	{
-		int32 i = 0;
-		bool bIsFind = false;
-		while (i < ParticleSystemEffects.Num() && !bIsFind)
-		{
-			if (ParticleSystemEffects[i]->Template && Effect->ParticleEffect && Effect->ParticleEffect == ParticleSystemEffects[i]->Template)
-			{
-				bIsFind = true;
-				ParticleSystemEffects[i]->DeactivateSystem();
-				ParticleSystemEffects[i]->DestroyComponent();
-				ParticleSystemEffects.RemoveAt(i);
-			}
-			i++;
-		}
-	}
-	
-}
-
 void ATPSCharacter::EffectAdd_OnRep()
 {
 	if (EffectAdd)
 	{
 		SwitchEffect(EffectAdd, true);
-	}
+	}	
 }
 
 void ATPSCharacter::EffectRemove_OnRep()
@@ -743,6 +715,57 @@ void ATPSCharacter::EffectRemove_OnRep()
 	if (EffectRemove)
 	{
 		SwitchEffect(EffectRemove, false);
+	}
+}
+
+void ATPSCharacter::ExecuteEffectAdded_OnServer_Implementation(UParticleSystem* ExecuteFX)
+{
+	ExecuteEffectAdded_Multicast(ExecuteFX);
+}
+
+void ATPSCharacter::ExecuteEffectAdded_Multicast_Implementation(UParticleSystem* ExecuteFX)
+{
+	UTypes::ExecuteEffectAdded(ExecuteFX, this, FVector(0), FName("Spine_01"));
+}
+
+void ATPSCharacter::SwitchEffect(UTPS_StateEffect* Effect, bool bIsAdd)
+{
+	if (bIsAdd)
+	{
+		if (Effect && Effect->ParticleEffect)
+		{
+			FName NameBoneToAttached = Effect->NameBone;
+			FVector Loc = FVector(0);
+
+			USkeletalMeshComponent* myMesh = GetMesh();
+			if (myMesh)
+			{
+				UParticleSystemComponent* newParticleSystem = UGameplayStatics::SpawnEmitterAttached(Effect->ParticleEffect, myMesh, NameBoneToAttached, Loc, FRotator::ZeroRotator, EAttachLocation::SnapToTarget, false);
+				ParticleSystemEffects.Add(newParticleSystem);											
+			}
+		}
+	}
+	else
+	{		
+		if (Effect && Effect->ParticleEffect)
+		{
+			int32 i = 0;
+			bool bIsFind = false;
+			if (ParticleSystemEffects.Num() > 0)
+			{
+				while (i < ParticleSystemEffects.Num(), !bIsFind)
+				{
+					if (ParticleSystemEffects[i] && ParticleSystemEffects[i]->Template && Effect->ParticleEffect && Effect->ParticleEffect == ParticleSystemEffects[i]->Template)
+					{
+						bIsFind = true;
+						ParticleSystemEffects[i]->DeactivateSystem();
+						ParticleSystemEffects[i]->DestroyComponent();
+						ParticleSystemEffects.RemoveAt(i);
+					}
+					i++;
+				}
+			}			
+		}
 	}
 }
 
@@ -806,15 +829,15 @@ float ATPSCharacter::TakeDamage(float DamageAmount, struct FDamageEvent const& D
 
 bool ATPSCharacter::ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags)
 {
-	bool Wrote = Super::ReplicateSubobjects(Channel, Bunch, RepFlags);
+	bool Wrote = Super::ReplicateSubobjects(Channel,Bunch,RepFlags);
 
 	for (int32 i = 0; i < Effects.Num(); i++)
 	{
-		if (Effects[i]) { Wrote |= Channel->ReplicateSubobject(Effects[i], *Bunch, *RepFlags); }
+		if (Effects[i]) {Wrote |= Channel->ReplicateSubobject(Effects[i], *Bunch, *RepFlags);}
 	}
-
 	return Wrote;
 }
+
 
 void ATPSCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {

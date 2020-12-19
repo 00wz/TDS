@@ -4,9 +4,9 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
-#include "StateEffects/TPS_StateEffect.h"
 #include "Interface/TPS_IGameActor.h"
 #include "TPS_EnemyCharacter.generated.h"
+
 
 UCLASS()
 class TPS_API ATPS_EnemyCharacter : public ACharacter, public ITPS_IGameActor
@@ -35,21 +35,28 @@ public:
 		void AddEffect(UTPS_StateEffect* newEffect);
 	void AddEffect_Implementation(UTPS_StateEffect* newEffect)override;
 
-	UPROPERTY(Replicated)
+	//Effect
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Setting")
 		TArray<UTPS_StateEffect*> Effects;
-	UPROPERTY(ReplicatedUsing = EffectAdd_OnRep);
-	UTPS_StateEffect* EffectAdd = nullptr;
-	UPROPERTY(ReplicatedUsing = EffectRemove_OnRep);
-	UTPS_StateEffect* EffectRemove = nullptr;
+	UPROPERTY(ReplicatedUsing = EffectAdd_OnRep)
+		UTPS_StateEffect* EffectAdd = nullptr;
+	UPROPERTY(ReplicatedUsing = EffectRemove_OnRep)
+		UTPS_StateEffect* EffectRemove = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Debug")
 		TArray<UParticleSystemComponent*> ParticleSystemEffects;
 
 	UFUNCTION()
-		void SwitchEffect(UTPS_StateEffect* Effect, bool bIsAdd);
-
-	UFUNCTION()
 		void EffectAdd_OnRep();
 	UFUNCTION()
 		void EffectRemove_OnRep();
+
+	UFUNCTION(Server, Reliable)
+		void ExecuteEffectAdded_OnServer(UParticleSystem* ExecuteFX);
+
+	UFUNCTION(NetMulticast, Reliable)
+		void ExecuteEffectAdded_Multicast(UParticleSystem* ExecuteFX);
+
+	UFUNCTION()
+		void SwitchEffect(UTPS_StateEffect* Effect, bool bIsAdd);
 };

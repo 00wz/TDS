@@ -3,6 +3,7 @@
 
 #include "TPS_EnemyCharacter.h"
 #include "Net/UnrealNetwork.h"
+#include "Particles/ParticleSystemComponent.h"
 #include "Engine/ActorChannel.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -28,22 +29,6 @@ void ATPS_EnemyCharacter::Tick(float DeltaTime)
 
 }
 
-void ATPS_EnemyCharacter::RemoveEffect_Implementation(UTPS_StateEffect* RemoveEffect)
-{
-	Effects.Remove(RemoveEffect);
-
-	EffectRemove = RemoveEffect;
-	SwitchEffect(EffectRemove, false);
-}
-
-void ATPS_EnemyCharacter::AddEffect_Implementation(UTPS_StateEffect* newEffect)
-{
-	Effects.Add(newEffect);
-
-	EffectAdd = newEffect;
-	SwitchEffect(EffectAdd, true);
-}
-
 // Called to bind functionality to input
 void ATPS_EnemyCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
@@ -51,37 +36,31 @@ void ATPS_EnemyCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInput
 
 }
 
-void ATPS_EnemyCharacter::SwitchEffect(UTPS_StateEffect* Effect, bool bIsAdd)
+void ATPS_EnemyCharacter::RemoveEffect_Implementation(UTPS_StateEffect* RemoveEffect)
 {
-	if (bIsAdd)
-	{
-		if (Effect && Effect->ParticleEffect)
-		{
-			FName NameBoneToAttached = Effect->BoneName;
-			FVector Loc = FVector(0);
+	Effects.Remove(RemoveEffect);
 
-			USkeletalMeshComponent* myMesh = GetMesh();
-			if (myMesh)
-			{
-				UParticleSystemComponent* newPartileSystem = UGameplayStatics::SpawnEmitterAttached(Effect->ParticleEffect, myMesh, NameBoneToAttached, Loc, FRotator::ZeroRotator, EAttachLocation::SnapToTarget, false);
-				ParticleSystemEffects.Add(newPartileSystem);				
-			}
-		}
+	if (!RemoveEffect->bIsAutoDestroyParticleEffect)
+	{
+		SwitchEffect(RemoveEffect, false);
+		EffectRemove = RemoveEffect;
+	}
+}
+
+void ATPS_EnemyCharacter::AddEffect_Implementation(UTPS_StateEffect* newEffect)
+{
+	Effects.Add(newEffect);
+
+	if (!newEffect->bIsAutoDestroyParticleEffect)
+	{
+		SwitchEffect(newEffect, true);
+		EffectAdd = newEffect;
 	}
 	else
 	{
-		int32 i = 0;
-		bool bIsFind = false;
-		while (i < ParticleSystemEffects.Num() && !bIsFind)
+		if (newEffect->ParticleEffect)
 		{
-			if (ParticleSystemEffects[i]->Template && Effect->ParticleEffect && Effect->ParticleEffect == ParticleSystemEffects[i]->Template)
-			{
-				bIsFind = true;
-				ParticleSystemEffects[i]->DeactivateSystem();
-				ParticleSystemEffects[i]->DestroyComponent();
-				ParticleSystemEffects.RemoveAt(i);
-			}
-			i++;
+			ExecuteEffectAdded_OnServer(newEffect->ParticleEffect);
 		}
 	}
 }
@@ -102,6 +81,54 @@ void ATPS_EnemyCharacter::EffectRemove_OnRep()
 	}
 }
 
+void ATPS_EnemyCharacter::ExecuteEffectAdded_OnServer_Implementation(UParticleSystem* ExecuteFX)
+{
+	ExecuteEffectAdded_Multicast(ExecuteFX);
+}
+
+void ATPS_EnemyCharacter::ExecuteEffectAdded_Multicast_Implementation(UParticleSystem* ExecuteFX)
+{
+	UTypes::ExecuteEffectAdded(ExecuteFX, this, FVector(0), FName("spine_01"));
+}
+
+void ATPS_EnemyCharacter::SwitchEffect(UTPS_StateEffect* Effect, bool bIsAdd)
+{
+	if (bIsAdd)
+	{
+		if (Effect && Effect->ParticleEffect)
+		{
+			FName NameBoneToAttached = Effect->NameBone;
+			FVector Loc = FVector(0);
+
+			USkeletalMeshComponent* myMesh = GetMesh();
+			if (myMesh)
+			{
+				UParticleSystemComponent* newParticleSystem = UGameplayStatics::SpawnEmitterAttached(Effect->ParticleEffect, myMesh, NameBoneToAttached, Loc, FRotator::ZeroRotator, EAttachLocation::SnapToTarget, false);
+				ParticleSystemEffects.Add(newParticleSystem);
+			}
+		}
+	}
+	else
+	{
+		int32 i = 0;
+		bool bIsFind = false;
+		if (ParticleSystemEffects.Num() > 0)
+		{
+			while (i < ParticleSystemEffects.Num(), !bIsFind)
+			{
+				if (ParticleSystemEffects[i] && ParticleSystemEffects[i]->Template && Effect->ParticleEffect && Effect->ParticleEffect == ParticleSystemEffects[i]->Template)
+				{
+					bIsFind = true;
+					ParticleSystemEffects[i]->DeactivateSystem();
+					ParticleSystemEffects[i]->DestroyComponent();
+					ParticleSystemEffects.RemoveAt(i);
+				}
+				i++;
+			}
+		}
+	}
+}
+
 bool ATPS_EnemyCharacter::ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags)
 {
 	bool Wrote = Super::ReplicateSubobjects(Channel, Bunch, RepFlags);
@@ -110,9 +137,9 @@ bool ATPS_EnemyCharacter::ReplicateSubobjects(UActorChannel* Channel, FOutBunch*
 	{
 		if (Effects[i]) { Wrote |= Channel->ReplicateSubobject(Effects[i], *Bunch, *RepFlags); }
 	}
-
 	return Wrote;
 }
+
 
 void ATPS_EnemyCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {

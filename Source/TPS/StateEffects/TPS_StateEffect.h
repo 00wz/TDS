@@ -16,7 +16,8 @@ class TPS_API UTPS_StateEffect : public UObject
 {
 	GENERATED_BODY()
 public:
-	virtual bool IsSupportedForNetworking()const override {return true;};
+
+	bool IsSupportedForNetworking()const override {return true;};
 	virtual bool InitObject(AActor* Actor, FName NameBoneHit);
 	virtual void DestroyObject();
 	
@@ -28,12 +29,12 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setting ExecuteTimer")
 	UParticleSystem* ParticleEffect = nullptr;
-	UParticleSystemComponent* ParticleEmitter = nullptr;
-
-	UPROPERTY()
-	FName BoneName;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setting ExecuteTimer")
+	bool bIsAutoDestroyParticleEffect = false;
 
 	AActor* myActor = nullptr;
+	UPROPERTY(Replicated)
+	FName NameBone;
 
 	UFUNCTION(NetMulticast, Reliable)
 	void FXSpawnByStateEffect_Multicast(UParticleSystem* Effect, FName NameBoneHit);

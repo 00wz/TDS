@@ -5,17 +5,17 @@
 #include "Character/TPSHealthComponent.h"
 #include "Interface/TPS_IGameActor.h"
 #include "Kismet/GameplayStatics.h"
+#include "Net/UnrealNetwork.h"
 
 bool UTPS_StateEffect::InitObject(AActor* Actor, FName NameBoneHit)
-{
-	
+{	
 	myActor = Actor;
-	BoneName = NameBoneHit;
+	NameBone = NameBoneHit;
+
 	ITPS_IGameActor* myInterface = Cast<ITPS_IGameActor>(myActor);
 	if (myInterface)
 	{
-		//myInterface->Execute_AddEffect(this);
-		ITPS_IGameActor::Execute_AddEffect(myActor,this);
+		myInterface->Execute_AddEffect(myActor,this);
 	}
 
 	return true;
@@ -26,7 +26,7 @@ void UTPS_StateEffect::DestroyObject()
 	ITPS_IGameActor* myInterface = Cast<ITPS_IGameActor>(myActor);
 	if (myInterface)
 	{
-		myInterface->Execute_RemoveEffect(myActor,this);
+		myInterface->Execute_RemoveEffect(myActor, this);
 	}
 
 	myActor = nullptr;
@@ -66,19 +66,27 @@ bool UTPS_StateEffect_ExecuteTimer::InitObject(AActor* Actor, FName NameBoneHit)
 {
 	Super::InitObject(Actor, NameBoneHit);
 
-	GetWorld()->GetTimerManager().SetTimer(TimerHandle_EffectTimer, this, &UTPS_StateEffect_ExecuteTimer::DestroyObject, Timer, false);
-	GetWorld()->GetTimerManager().SetTimer(TimerHandle_ExecuteTimer, this, &UTPS_StateEffect_ExecuteTimer::Execute, RateTime, true);
-	
-	if (ParticleEffect)
+	if (GetWorld())
 	{
-		//FXSpawnByStateEffect_Multicast(ParticleEffect, NameBoneHit);		
+		GetWorld()->GetTimerManager().SetTimer(TimerHandle_EffectTimer, this, &UTPS_StateEffect_ExecuteTimer::DestroyObject, Timer, false);
+		GetWorld()->GetTimerManager().SetTimer(TimerHandle_ExecuteTimer, this, &UTPS_StateEffect_ExecuteTimer::Execute, RateTime, true);
 	}
+	
+	//if (ParticleEffect)
+	//{
+		//FXSpawnByStateEffect_Multicast(ParticleEffect, NameBoneHit);		To REmove
+	//}
 	
 	return true;
 }
 
 void UTPS_StateEffect_ExecuteTimer::DestroyObject()
 {
+	if (GetWorld())
+	{
+		GetWorld()->GetTimerManager().ClearAllTimersForObject(this);
+	}
+
 	//ParticleEmitter->DestroyComponent();
 	//ParticleEmitter = nullptr;
 	Super::DestroyObject();
@@ -100,7 +108,7 @@ void UTPS_StateEffect::FXSpawnByStateEffect_Multicast_Implementation(UParticleSy
 {
 	//ToDo for object with interface create func return offset, Name Bones, 
 	//ToDo Random init Effect with available array (For)
-	if (Effect)
+	/*if (Effect)
 	{
 		FName NameBoneToAttached = NameBoneHit;
 		FVector Loc = FVector(0);
@@ -115,5 +123,12 @@ void UTPS_StateEffect::FXSpawnByStateEffect_Multicast_Implementation(UParticleSy
 		{
 			ParticleEmitter = UGameplayStatics::SpawnEmitterAttached(Effect, myActor->GetRootComponent(), NameBoneToAttached, Loc, FRotator::ZeroRotator, EAttachLocation::SnapToTarget, false);
 		}
-	}
+	}*/
+}
+
+void UTPS_StateEffect::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(UTPS_StateEffect, NameBone);
 }
