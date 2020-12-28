@@ -114,7 +114,7 @@ void ATPS_EnemyCharacter::SwitchEffect(UTPS_StateEffect* Effect, bool bIsAdd)
 		bool bIsFind = false;
 		if (ParticleSystemEffects.Num() > 0)
 		{
-			while (i < ParticleSystemEffects.Num(), !bIsFind)
+			while (i < ParticleSystemEffects.Num() && !bIsFind)
 			{
 				if (ParticleSystemEffects[i] && ParticleSystemEffects[i]->Template && Effect->ParticleEffect && Effect->ParticleEffect == ParticleSystemEffects[i]->Template)
 				{

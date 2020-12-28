@@ -129,7 +129,7 @@ void ATPS_EnvironmentStructure::SwitchEffect(UTPS_StateEffect* Effect, bool bIsA
 		bool bIsFind = false;
 		if (ParticleSystemEffects.Num() > 0)
 		{
-			while (i < ParticleSystemEffects.Num(), !bIsFind)
+			while (i < ParticleSystemEffects.Num() && !bIsFind)
 			{
 				if (ParticleSystemEffects[i]->Template && Effect->ParticleEffect && Effect->ParticleEffect == ParticleSystemEffects[i]->Template)
 				{
