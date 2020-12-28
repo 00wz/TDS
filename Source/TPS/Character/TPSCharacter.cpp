@@ -19,7 +19,7 @@
 #include "Net/UnrealNetwork.h"
 #include "Particles/ParticleSystemComponent.h"
 #include "Engine/ActorChannel.h"
-#pragma optimize ("", off)
+
 
 ATPSCharacter::ATPSCharacter()
 {
@@ -165,7 +165,7 @@ void ATPSCharacter::InputAxisX(float Value)
 
 void ATPSCharacter::InputAttackPressed()
 {
-	if (bIsAlive)
+	if (CharHealthComponent && CharHealthComponent->GetIsAlive())
 	{
 		AttackCharEvent(true);
 	}	
@@ -214,7 +214,7 @@ void ATPSCharacter::InputAimReleased()
 
 void ATPSCharacter::MovementTick(float DeltaTime)
 {
-	if (bIsAlive)
+	if (CharHealthComponent && CharHealthComponent->GetIsAlive())
 	{
 		if (GetController() && GetController()->IsLocalPlayerController())
 		{
@@ -300,7 +300,12 @@ int32 ATPSCharacter::GetCurrentWeaponIndex()
 
 bool ATPSCharacter::GetIsAlive()
 {
-	return bIsAlive;
+	bool result = false;
+	if (CharHealthComponent)
+	{
+		result = CharHealthComponent->GetIsAlive();
+	}
+	return result;
 }
 
 void ATPSCharacter::AttackCharEvent(bool bIsFiring)
@@ -468,7 +473,7 @@ void ATPSCharacter::InitWeapon(FName IdWeaponName, FAdditionalWeaponInfo WeaponA
 
 void ATPSCharacter::TryReloadWeapon()
 {
-	if (bIsAlive && CurrentWeapon && !CurrentWeapon->WeaponReloading)
+	if (CharHealthComponent && CharHealthComponent->GetIsAlive() && CurrentWeapon && !CurrentWeapon->WeaponReloading)
 	{	
 		TryReloadWeapon_OnServer();			
 	}
@@ -771,41 +776,48 @@ void ATPSCharacter::SwitchEffect(UTPS_StateEffect* Effect, bool bIsAdd)
 
 void ATPSCharacter::CharDead()
 {
-	float TimeAnim = 0.0f;
-	int32 rnd = FMath::RandHelper(DeadsAnim.Num());
-	if (DeadsAnim.IsValidIndex(rnd) && DeadsAnim[rnd] && GetMesh() && GetMesh()->GetAnimInstance())
+	if (HasAuthority())
 	{
-		TimeAnim = DeadsAnim[rnd]->GetPlayLength();
-		//GetMesh()->GetAnimInstance()->Montage_Play(DeadsAnim[rnd]);
-		PlayAnim_Multicast(DeadsAnim[rnd]);
+		float TimeAnim = 0.0f;
+		int32 rnd = FMath::RandHelper(DeadsAnim.Num());
+		if (DeadsAnim.IsValidIndex(rnd) && DeadsAnim[rnd] && GetMesh() && GetMesh()->GetAnimInstance())
+		{
+			TimeAnim = DeadsAnim[rnd]->GetPlayLength();
+			//GetMesh()->GetAnimInstance()->Montage_Play(DeadsAnim[rnd]);
+			PlayAnim_Multicast(DeadsAnim[rnd]);
+		}
+
+		if (GetController())
+		{
+			GetController()->UnPossess();
+		}
+
+		GetWorldTimerManager().SetTimer(TimerHandle_RagDollTimer, this, &ATPSCharacter::EnableRagdoll_Multicast, TimeAnim, false);
+	}
+	else
+	{
+		if (GetCursorToWorld())
+		{
+			GetCursorToWorld()->SetVisibility(false);
+		}
+
+		AttackCharEvent(false);
 	}
 
-	bIsAlive = false;
-
-	if (GetController())
+	if (GetCapsuleComponent())
 	{
-		GetController()->UnPossess();
+		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
 	}
-
-	UnPossessed();
-
-	GetWorldTimerManager().SetTimer(TimerHandle_RagDollTimer, this, &ATPSCharacter::EnableRagdoll, TimeAnim, false);
-
-	if (GetCursorToWorld())
-	{
-		GetCursorToWorld()->SetVisibility(false);
-	}
-	
-
-	AttackCharEvent(false);	
 
 	CharDead_BP();
 }
 
-void ATPSCharacter::EnableRagdoll()
+void ATPSCharacter::EnableRagdoll_Multicast_Implementation()
 {
 	if (GetMesh())
 	{
+		GetMesh()->SetCollisionObjectType(ECC_PhysicsBody);
+		GetMesh()->SetCollisionResponseToChannel(ECC_Pawn, ECollisionResponse::ECR_Block);
 		GetMesh()->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
 		GetMesh()->SetSimulatePhysics(true);
 	}	
@@ -814,7 +826,7 @@ void ATPSCharacter::EnableRagdoll()
 float ATPSCharacter::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser)
 {
 	float ActualDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
-	if (bIsAlive)
+	if (CharHealthComponent && CharHealthComponent->GetIsAlive())
 	{
 		CharHealthComponent->ChangeHealthValue_OnServer(-DamageAmount);
 	}
@@ -854,4 +866,3 @@ void ATPSCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLif
 	DOREPLIFETIME(ATPSCharacter, EffectAdd);
 	DOREPLIFETIME(ATPSCharacter, EffectRemove);
 }
-#pragma optimize ("", on)
