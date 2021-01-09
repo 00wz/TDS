@@ -65,6 +65,7 @@ void AProjectileDefault::InitProjectile(FProjectileInfo InitParam)
 {
 	BulletProjectileMovement->InitialSpeed = InitParam.ProjectileInitSpeed;
 	BulletProjectileMovement->MaxSpeed = InitParam.ProjectileMaxSpeed;
+	
 	this->SetLifeSpan(InitParam.ProjectileLifeTime);
 	if (InitParam.ProjectileStaticMesh)
 	{
@@ -162,4 +163,14 @@ void AProjectileDefault::SpawnHitSound_Multicast_Implementation(USoundBase* HitS
 {
 	UGameplayStatics::PlaySoundAtLocation(GetWorld(), HitSound, HitResult.ImpactPoint);
 }
+
+void AProjectileDefault::PostNetReceiveVelocity(const FVector& NewVelocity)
+{
+	if (BulletProjectileMovement)
+	{
+		BulletProjectileMovement->Velocity = NewVelocity;
+	}
+}
+
+
 

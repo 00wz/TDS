@@ -62,4 +62,8 @@ public:
 	void SpawnHitFX_Multicast(UParticleSystem* FxTemplate, FHitResult HitResult);
 	UFUNCTION(NetMulticast, Reliable)
 	void SpawnHitSound_Multicast(USoundBase* HitSound, FHitResult HitResult);
+
+	virtual void PostNetReceiveVelocity(const FVector& NewVelocity)override;
+
+
 };
