@@ -63,6 +63,9 @@ public:
 	UFUNCTION(NetMulticast, Reliable)
 	void SpawnHitSound_Multicast(USoundBase* HitSound, FHitResult HitResult);
 
+	UFUNCTION(NetMulticast, Reliable)
+		void InitVelocity_Multicast(float InitSpeed, float MaxSpeed);
+
 	virtual void PostNetReceiveVelocity(const FVector& NewVelocity)override;
 
 
