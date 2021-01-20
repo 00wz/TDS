@@ -776,6 +776,7 @@ void ATPSCharacter::SwitchEffect(UTPS_StateEffect* Effect, bool bIsAdd)
 
 void ATPSCharacter::CharDead()
 {
+	CharDead_BP();
 	if (HasAuthority())
 	{
 		float TimeAnim = 0.0f;
@@ -793,6 +794,12 @@ void ATPSCharacter::CharDead()
 		}
 
 		GetWorldTimerManager().SetTimer(TimerHandle_RagDollTimer, this, &ATPSCharacter::EnableRagdoll_Multicast, TimeAnim, false);
+
+		SetLifeSpan(20.0f);
+		if (GetCurrentWeapon())
+		{
+			GetCurrentWeapon()->SetLifeSpan(20.0f);
+		}
 	}
 	else
 	{
@@ -808,8 +815,6 @@ void ATPSCharacter::CharDead()
 	{
 		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
 	}
-
-	CharDead_BP();
 }
 
 void ATPSCharacter::EnableRagdoll_Multicast_Implementation()
