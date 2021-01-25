@@ -258,8 +258,7 @@ void AWeaponDefault::Fire()
 				}
 			}
 			else
-			{
-				// ToDo Multicast trace fx
+			{			
 				FHitResult Hit;
 				TArray<AActor*> Actors;				
 
@@ -285,7 +284,7 @@ void AWeaponDefault::Fire()
 
 						if (myMaterial && Hit.GetComponent())
 						{
-							UGameplayStatics::SpawnDecalAttached(myMaterial, FVector(20.0f), Hit.GetComponent(), NAME_None, Hit.ImpactPoint, Hit.ImpactNormal.Rotation(), EAttachLocation::KeepWorldPosition, 10.0f);
+							SpawnTraceHitDecal_Multicast(myMaterial, Hit);							
 						}
 					}
 					if (WeaponSetting.ProjectileSetting.HitFXs.Contains(mySurfacetype))
@@ -293,13 +292,13 @@ void AWeaponDefault::Fire()
 						UParticleSystem* myParticle = WeaponSetting.ProjectileSetting.HitFXs[mySurfacetype];
 						if (myParticle)
 						{
-							UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), myParticle, FTransform(Hit.ImpactNormal.Rotation(), Hit.ImpactPoint, FVector(1.0f)));
+							SpawnTraceHitFX_Multicast(myParticle, Hit);							
 						}
 					}
 
 					if (WeaponSetting.ProjectileSetting.HitSound)
 					{
-						UGameplayStatics::PlaySoundAtLocation(GetWorld(), WeaponSetting.ProjectileSetting.HitSound, Hit.ImpactPoint);
+						SpawnTraceHitSound_Multicast(WeaponSetting.ProjectileSetting.HitSound, Hit);						
 					}
 					
 					UTypes::AddEffectBySurfaceType(Hit.GetActor(), Hit.BoneName, ProjectileInfo.Effect, mySurfacetype);							
@@ -624,6 +623,21 @@ void AWeaponDefault::FXWeaponFire_Multicast_Implementation(UParticleSystem* FxFi
 	{
 		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), FxFire, ShootLocation->GetComponentTransform());
 	}		
+}
+
+void AWeaponDefault::SpawnTraceHitDecal_Multicast_Implementation(UMaterialInterface* DecalMaterial, FHitResult HitResult)
+{
+	UGameplayStatics::SpawnDecalAttached(DecalMaterial, FVector(20.0f), HitResult.GetComponent(), NAME_None, HitResult.ImpactPoint, HitResult.ImpactNormal.Rotation(), EAttachLocation::KeepWorldPosition, 10.0f);
+}
+
+void AWeaponDefault::SpawnTraceHitFX_Multicast_Implementation(UParticleSystem* FxTemplate, FHitResult HitResult)
+{
+	UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), FxTemplate, FTransform(HitResult.ImpactNormal.Rotation(), HitResult.ImpactPoint, FVector(1.0f)));
+}
+
+void AWeaponDefault::SpawnTraceHitSound_Multicast_Implementation(USoundBase* HitSound, FHitResult HitResult)
+{
+	UGameplayStatics::PlaySoundAtLocation(GetWorld(), HitSound, HitResult.ImpactPoint);
 }
 
 void AWeaponDefault::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
