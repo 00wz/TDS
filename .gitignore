@@ -12,8 +12,4 @@ Saved
 *.suo
 *.xcodeproj
 *.xcworkspace
-/Content/SoulCity
-/Content/ParagonDekker
-/Content/NaturePackage
-/Content/PhotoR_Backgrounds
-/Content/MegaScans_Assets
+/Build
