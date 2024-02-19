@@ -8,8 +8,16 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="f6686501-b70c-4418-a60a-228a8c0cb0b9" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/Source/TPS/TPS.Build.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TPS/TPS.Build.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/TPS.uproject" beforeDir="false" afterPath="$PROJECT_DIR$/TPS.uproject" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.TPS/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.TPS/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Config/DefaultEngine.ini" beforeDir="false" afterPath="$PROJECT_DIR$/Config/DefaultEngine.ini" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprint/Character/BP_Character.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprint/Character/BP_Character.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprint/Weapons/BP_WeaponDefault.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprint/Weapons/BP_WeaponDefault.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Items/GameActor/BP_WeaponDefault_GrenadeLauncher.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Items/GameActor/BP_WeaponDefault_GrenadeLauncher.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Items/GameActor/BP_WeaponDefault_Rifle.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Items/GameActor/BP_WeaponDefault_Rifle.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Items/GameActor/BP_WeaponDefault_ShotGun.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Items/GameActor/BP_WeaponDefault_ShotGun.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Items/GameActor/BP_WeaponDefault_SniperRifle.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Items/GameActor/BP_WeaponDefault_SniperRifle.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Map/MyTopDownExampleMap.umap" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Map/MyTopDownExampleMap.umap" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Table/DT_WeaponInfo.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Table/DT_WeaponInfo.uasset" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -32,7 +40,7 @@
     "C++ Project.TPS.executor": "Run",
     "RunOnceActivity.OpenProjectViewOnStart": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
-    "git-widget-placeholder": "629ed8c3",
+    "git-widget-placeholder": "homework",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
@@ -160,17 +168,6 @@
         <option name="PASS_PARENT_ENVS" value="1" />
         <option name="USE_EXTERNAL_CONSOLE" value="0" />
       </configuration_10>
-      <configuration_11>
-        <option name="CONFIGURATION" value="" />
-        <option name="PLATFORM" value="" />
-        <option name="PROJECT_FILE_PATH" value="$PROJECT_DIR$/Intermediate/ProjectFiles/TPS.vcxproj" />
-        <option name="CURRENT_LAUNCH_PROFILE" value="Local" />
-        <option name="EXE_PATH" value="$(TargetPath)" />
-        <option name="PROGRAM_PARAMETERS" value="" />
-        <option name="WORKING_DIRECTORY" value="$(ProjectDir)" />
-        <option name="PASS_PARENT_ENVS" value="1" />
-        <option name="USE_EXTERNAL_CONSOLE" value="0" />
-      </configuration_11>
       <option name="DEFAULT_PROJECT_PATH" value="$PROJECT_DIR$/Intermediate/ProjectFiles/TPS.vcxproj" />
       <method v="2">
         <option name="Build" />
@@ -187,6 +184,7 @@
       <updated>1706318949142</updated>
       <workItem from="1706318951355" duration="6397000" />
       <workItem from="1708033370108" duration="1126000" />
+      <workItem from="1708312229396" duration="2417000" />
     </task>
     <servers />
   </component>
