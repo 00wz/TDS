@@ -13,3 +13,4 @@ Saved
 *.xcodeproj
 *.xcworkspace
 /Build
+git-filter-repo
