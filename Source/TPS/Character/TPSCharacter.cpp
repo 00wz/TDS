@@ -128,25 +128,17 @@ void ATPSCharacter::InputAxisX(float Value)
 
 void ATPSCharacter::InputAttackPressed()
 {
-	if(bFrozen)
-	{
-		return;
-	}
 	AttackCharEvent(true);
 }
 
 void ATPSCharacter::InputAttackReleased()
 {
-	if(bFrozen)
-	{
-		return;
-	}
 	AttackCharEvent(false);
 }
 
 void ATPSCharacter::MovementTick(float DeltaTime)
 {
-	if (bIsAlive && !bFrozen)
+	if (bIsAlive)
 	{
 		AddMovementInput(FVector(1.0f, 0.0f, 0.0f), AxisX);
 		AddMovementInput(FVector(0.0f, 1.0f, 0.0f), AxisY);
@@ -363,10 +355,6 @@ void ATPSCharacter::RemoveCurrentWeapon()
 
 void ATPSCharacter::TryReloadWeapon()
 {
-	if(bFrozen)
-	{
-		return;
-	}
 	if (CurrentWeapon && !CurrentWeapon->WeaponReloading)//fix reload
 	{
 		if (CurrentWeapon->GetWeaponRound() < CurrentWeapon->WeaponSetting.MaxRound && CurrentWeapon->CheckCanWeaponReload())
@@ -420,10 +408,6 @@ UDecalComponent* ATPSCharacter::GetCursorToWorld()
 //now we not have not success switch/ if 1 weapon switch to self
 void ATPSCharacter::TrySwicthNextWeapon()
 {
-	if(bFrozen)
-	{
-		return;
-	}
 	if (InventoryComponent->WeaponSlots.Num() > 1)
 	{
 		//We have more then one weapon go switch
@@ -446,10 +430,6 @@ void ATPSCharacter::TrySwicthNextWeapon()
 
 void ATPSCharacter::TrySwitchPreviosWeapon()
 {
-	if(bFrozen)
-	{
-		return;
-	}
 	if (InventoryComponent->WeaponSlots.Num() > 1)
 	{
 		//We have more then one weapon go switch

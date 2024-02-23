@@ -79,8 +79,6 @@ public:
 		bool AimEnabled = false;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
 		bool bIsAlive = true;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
-		bool bFrozen = false;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
 		TArray<UAnimMontage*> DeadsAnim;
